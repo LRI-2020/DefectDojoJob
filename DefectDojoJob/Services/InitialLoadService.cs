@@ -20,39 +20,41 @@ public class InitialLoadService
         this.configuration = configuration;
     }
 
+    string GetJsonResponseFromFireBase(string data)
+    {
+        var obj = (IList<JToken>)JObject.Parse(data);
+        return ((JProperty)obj[0]).Value.ToString();
+    }
+
+    
     public async Task<IEnumerable<AssetProjectInfo>> FetchInitialLoadAsync()
     {
         var response = await httpClient.GetAsync(configuration["AssetUrl"]);
-        var jsonResponse = await response.Content.ReadAsStringAsync();
+        var jsonResponse = GetJsonResponseFromFireBase(await response.Content.ReadAsStringAsync());
+        var jObjects = JsonConvert.DeserializeObject<List<JObject>>(jsonResponse) ??
+               new List<JObject>();
+        var invalidData = new List<JObject>(); //TODO do something with invalids
+        List<(JObject jObject, string error)> errors = new ();
 
-        //chipotage à cause de firebase - endpoint mock
-        var obj = (IList<JToken>)JObject.Parse(jsonResponse);
-        var allData = ((JProperty)obj[0]).Value;
-        
-        var invalid = new List<JObject>(); //TODO do something with invalids
-        var valid = new List<AssetProjectInfo>();
-        List<(JToken token, IList<string> errors)> errorMessages = new ();
-        
-        foreach (var jToken in allData)
+        var res = new List<AssetProjectInfo>();
+        foreach (var data in jObjects)
         {
-            var data = jToken.ToObject<JObject>();
-            IList<string> messages = new List<string>();
-            if (data != null && !data.IsValid(assetProjectInfoValidator.GetValidationSchema(),out messages))
+            try
             {
-                invalid.Add(data);
-                errorMessages.Add((jToken,messages));
-                continue;
+                var projectInfo = data.ToObject<AssetProjectInfo>();
+                if (projectInfo == null) throw new Exception("Invalid json model provided");
+                assetProjectInfoValidator.Validate(projectInfo);
+                res.Add(projectInfo);
+               
             }
-
-            var asset = jToken.ToObject<AssetProjectInfo>();
-            if (asset != null && assetProjectInfoValidator.HasRequiredProperties(asset)) valid.Add(asset);
-
-            else
+            catch (Exception e)
             {
-               if(data != null) invalid.Add(data);
+                invalidData.Add(data);
+                errors.Add((data,e.Message));
             }
         }
-        return valid;
+        return res;
     }
+
 
 }

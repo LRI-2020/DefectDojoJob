@@ -1,9 +1,15 @@
-﻿namespace DefectDojoJob.Models;
+﻿using Newtonsoft.Json;
+
+namespace DefectDojoJob.Models;
 
 public class AssetProjectInfo
 {
+    [JsonProperty(Required = Required.Always)]
     public int Id { get; set; }
+
+    [JsonProperty(Required = Required.Always)]
     public string Name { get; set; }
+
     public string? ShortDescription { get; set; }
     public string? DetailedDescription { get; set; }
     public string? Code { get; set; }
@@ -21,5 +27,4 @@ public class AssetProjectInfo
     public List<string>? Urls { get; set; }
     public string? UrlType { get; set; }
     public string? Url { get; set; }
-
 }
