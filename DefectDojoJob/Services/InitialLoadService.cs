@@ -26,15 +26,10 @@ public class InitialLoadService
         return ((JProperty)obj[0]).Value.ToString();
     }
 
-    
     public async Task<IEnumerable<AssetProjectInfo>> FetchInitialLoadAsync()
     {
-        var response = await httpClient.GetAsync(configuration["AssetUrl"]);
-        var jsonResponse = GetJsonResponseFromFireBase(await response.Content.ReadAsStringAsync());
-        var jObjects = JsonConvert.DeserializeObject<List<JObject>>(jsonResponse) ??
-               new List<JObject>();
-        var invalidData = new List<JObject>(); //TODO do something with invalids
-        List<(JObject jObject, string error)> errors = new ();
+        var jObjects = await FetchJsonDataAsync();
+        List<(JObject jObject, string error)> errors = new();
 
         var res = new List<AssetProjectInfo>();
         foreach (var data in jObjects)
@@ -45,16 +40,22 @@ public class InitialLoadService
                 if (projectInfo == null) throw new Exception("Invalid json model provided");
                 assetProjectInfoValidator.Validate(projectInfo);
                 res.Add(projectInfo);
-               
             }
             catch (Exception e)
             {
-                invalidData.Add(data);
-                errors.Add((data,e.Message));
+                errors.Add((data, e.Message));
+                //TODO do something with errors
             }
         }
+
         return res;
     }
 
-
+    private async Task<IEnumerable<JObject>> FetchJsonDataAsync()
+    {
+        var response = await httpClient.GetAsync(configuration["AssetUrl"]);
+        var jsonResponse = GetJsonResponseFromFireBase(await response.Content.ReadAsStringAsync());
+        return JsonConvert.DeserializeObject<List<JObject>>(jsonResponse) ??
+               new List<JObject>();
+    }
 }
