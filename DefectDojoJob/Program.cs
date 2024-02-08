@@ -17,9 +17,10 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<Worker>();
         services.AddHttpClient<DefectDojoConnector>();
         services.AddTransient<InitialLoadService>();
+        services.AddTransient<AssetProjectInfoProcessor>();
         services.AddSingleton<AssetProjectInfoValidator>();
+        services.AddLogging(o => { o.AddConsole(); });
     })
-
     .Build();
 
 await host.RunAsync();
