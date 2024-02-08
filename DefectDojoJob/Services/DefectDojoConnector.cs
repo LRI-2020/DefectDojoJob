@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
+using DefectDojoJob.Helpers;
 using DefectDojoJob.Models.DefectDojo;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,8 +25,9 @@ public class DefectDojoConnector
 
     public async Task<DojoGroup?> GetDefectDojoGroupByNameAsync(string name)
     {
-        var url = $"dojo_groups/?name={name}";
-        
+        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("dojo_groups/",
+            new Dictionary<string, string>() { { "name", name } });
+
         var response = await httpClient.GetAsync(url);
         if (response.IsSuccessStatusCode)
         {
