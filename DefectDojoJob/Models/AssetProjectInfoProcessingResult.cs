@@ -9,5 +9,6 @@ public class AssetProjectInfoProcessingResult
     public bool HasErrors { get; set; }
     public bool HasWarnings { get; set; }
     public List<string> Errors { get; set; } = new();
-    public List<string> Warning { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
+    public List<int> UserIds { get; set; } = new();
 }
