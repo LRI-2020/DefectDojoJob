@@ -14,12 +14,13 @@ public class AssetProjectInfoProcessor
         this.defectDojoConnector = defectDojoConnector;
     }
 
-    public async Task<AssetProjectInfoProcessingResult> ProccessAssetProjectInfo(AssetProjectInfo assetProjectInfo)
+    public async Task<AssetProjectInfoProcessingResult> ProcessAssetProjectInfo(AssetProjectInfo assetProjectInfo)
     {
         var errors = new List<string>();
+        var result = new AssetProjectInfoProcessingResult();
         try
         {
-            await TeamProcessorAsync(assetProjectInfo);
+            result.TeamId = await TeamProcessorAsync(assetProjectInfo);
 
         }
         catch (Exception e)
@@ -27,11 +28,8 @@ public class AssetProjectInfoProcessor
             errors.Add(e.Message);
         }
 
-        return new AssetProjectInfoProcessingResult()
-        {
-            AssetId = assetProjectInfo.Id,
-            Errors = errors
-        };
+        result.Errors = errors;
+        return result;
 
     }
     private async Task<int> TeamProcessorAsync(AssetProjectInfo assetProjectInfo)
@@ -43,9 +41,6 @@ public class AssetProjectInfoProcessor
         return -1;
 
     }
-
-    
-
     private bool UsersProcessor(AssetProjectInfo assetProjectInfo)
     {
         return false;

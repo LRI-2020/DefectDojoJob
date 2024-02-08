@@ -3,6 +3,7 @@
 public class AssetProjectInfoProcessingResult
 {
     public int ProductId { get; set; }
+    public int TeamId { get; set; }
     public int AssetId { get; set; }
     public AssetProjectInfoProcessingAction Action { get; set; }
     public bool HasErrors { get; set; }

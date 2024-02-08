@@ -17,7 +17,6 @@ public class DefectDojoConnector
         this.httpClient = httpClient;
         this.logger = logger;
         this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", configuration["ApiToken"]);
-        this.httpClient.DefaultRequestHeaders.Add("Access-Control-Expose-Headers", "authorization");
 
         var url = configuration["DefectDojoBaseUrl"];
         if (url != null) this.httpClient.BaseAddress = new Uri(url);
@@ -27,7 +26,7 @@ public class DefectDojoConnector
     {
         var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("dojo_groups/",
             new Dictionary<string, string>() { { "name", name } });
-
+        
         var response = await httpClient.GetAsync(url);
         if (response.IsSuccessStatusCode)
         {
@@ -47,7 +46,7 @@ public class DefectDojoConnector
         throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
     }
 
-    public async Task CreateDojoGroup(string teamName)
+    public async Task<int> CreateDojoGroup(string teamName)
     {
         var url = "dojo_groups/";
         var body = new
@@ -58,6 +57,10 @@ public class DefectDojoConnector
             JsonConvert.SerializeObject(body),
             Encoding.UTF8,
             "application/json");
-//        var res = await httpClient.PostAsync(url, content);
+        var res = await httpClient.PostAsync(url, content);
+        if (!res.IsSuccessStatusCode) throw new Exception("Team could not be created");
+        var data = (JObject.Parse(await res.Content.ReadAsStringAsync())["id"])?.ToObject<int>();
+        
+        return data?? throw new Exception($"New team '{teamName}' could not be retrieved");
     }
 }

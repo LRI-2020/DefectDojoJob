@@ -27,7 +27,7 @@ public class Worker : BackgroundService
         var results = new List<AssetProjectInfoProcessingResult>();
         foreach (var assetProjectInfo in projectsInfo)
         {
-            var res = await assetProjectInfoProcessor.ProccessAssetProjectInfo(assetProjectInfo);
+            var res = await assetProjectInfoProcessor.ProcessAssetProjectInfo(assetProjectInfo);
             results.Add(res);
         };
         
