@@ -85,7 +85,7 @@ public class AssetProjectInfoProcessor
                 if (e is WarningAssetProjectInfoProcessor warning) res.Warnings.Add(warning);
                 else
                 {
-                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message,teamName,EntityType.Team));
+                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, teamName, EntityType.Team));
                 }
             }
         }
@@ -93,31 +93,31 @@ public class AssetProjectInfoProcessor
         return res;
     }
 
-    private async Task<(string AssetIdentifier, int DefectDojoId)> ProcessTeamAsync(string teamName)
+    private async Task<AssetToDefectDojoMapper> ProcessTeamAsync(string teamName)
     {
         var team = await defectDojoConnector.GetDefectDojoGroupByNameAsync(teamName);
         if (team != null)
         {
-            return (teamName, team.Id);
+            return new AssetToDefectDojoMapper(teamName, team.Id);
         }
 
         throw new WarningAssetProjectInfoProcessor($"Team {teamName} not found in Defect Dojo", teamName, EntityType.Team);
     }
 
 
-    private async Task<(string AssetIdentifier, int DefectDojoId)> ProcessUserAsync(string username)
+    private async Task<AssetToDefectDojoMapper> ProcessUserAsync(string username)
     {
         var user = await defectDojoConnector.GetDefectDojoUserByUsername(username);
         if (user != null)
         {
-            return (username, user.Id);
+            return new AssetToDefectDojoMapper(username, user.Id);
         }
 
         throw new WarningAssetProjectInfoProcessor($"Warning : user {username} does not exist in Defect Dojo", username, EntityType.User);
     }
 
     private async Task<ProductsProcessingResult> ProductsProcessorAsync(List<AssetProjectInfo> projects,
-        List<(string AssetIdentifier, int DefectDojoId)> users)
+        List<AssetToDefectDojoMapper> users)
     {
         var result = new ProductsProcessingResult();
         foreach (var project in projects)
@@ -131,7 +131,7 @@ public class AssetProjectInfoProcessor
                 if (e is WarningAssetProjectInfoProcessor warning) result.Warnings.Add(warning);
                 else
                 {
-                    result.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message,project.Name,EntityType.Product));
+                    result.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, project.Name, EntityType.Product));
                 }
             }
         }
@@ -139,8 +139,8 @@ public class AssetProjectInfoProcessor
         return result;
     }
 
-    private async Task<(string AssetIdentifier, int DefectDojoId)> ProcessProduct(AssetProjectInfo projectInfo,
-        List<(string AssetIdentifier, int DefectDojoId)> users)
+    private async Task<AssetToDefectDojoMapper> ProcessProduct(AssetProjectInfo projectInfo,
+        List<AssetToDefectDojoMapper> users)
     {
         //TODO ProductType Processing!!
         var description = $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
@@ -149,20 +149,20 @@ public class AssetProjectInfoProcessor
 
         var appOwnerId = users
             .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwner)
-            .DefectDojoId;
+            ?.DefectDojoId;
         var appOwnerBuId = users
-            .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwnerBackUp)
+            .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwnerBackUp)!
             .DefectDojoId;
         var funcOwnerId = users
-            .Find(u => u.AssetIdentifier == projectInfo.FunctionalOwner)
+            .Find(u => u.AssetIdentifier == projectInfo.FunctionalOwner)!
             .DefectDojoId;
 
         var product = await defectDojoConnector.CreateProductAsync(projectInfo.Name, description ?? "Enter a description",
-            productType, lifecycle, appOwnerId != 0 ? appOwnerId : null,
-            appOwnerBuId != 0 ? appOwnerBuId : null, funcOwnerId != 0 ? funcOwnerId : null,
+            productType, lifecycle, appOwnerId,
+            appOwnerBuId, funcOwnerId,
             projectInfo.NumberOfUsers, projectInfo.OpenToPartner ?? false);
-  
-        return (projectInfo.Name, product.Id);
+
+        return new AssetToDefectDojoMapper(projectInfo.Name, product.Id);
     }
 
     private Lifecycle? MatchLifeCycle(string? state)

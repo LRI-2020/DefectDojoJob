@@ -25,7 +25,7 @@ public class Product
 
     [JsonProperty("product_meta")] public List<ProductMeta> ProductMetas { get; set; } = new();
     public DateTime? Created { get; }
-    public Lifecycle Lifecycle { get; set; }
+    public Lifecycle? Lifecycle { get; set; }
     [JsonProperty("user_records")] public int? UserRecords { get; set; }
     [JsonProperty("external_audience")] public bool? ExternalAudience { get; set; }
     [JsonProperty("product_manager")] public int? ProductManager { get; set; }
