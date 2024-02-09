@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.ComponentModel;
+using System.Net.Http.Headers;
 using System.Text;
 using DefectDojoJob.Helpers;
 using DefectDojoJob.Models.DefectDojo;
@@ -40,7 +41,7 @@ public class DefectDojoConnector
         throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
     }
 
-    public async Task<int> CreateDojoGroup(string teamName)
+    public async Task<DojoGroup> CreateDojoGroup(string teamName)
     {
         var url = "dojo_groups/";
         var body = new
@@ -53,9 +54,7 @@ public class DefectDojoConnector
             "application/json");
         var res = await httpClient.PostAsync(url, content);
         if (!res.IsSuccessStatusCode) throw new Exception("Team could not be created");
-        var data = (JObject.Parse(await res.Content.ReadAsStringAsync())["id"])?.ToObject<int>();
-
-        return data ?? throw new Exception($"New team '{teamName}' could not be retrieved");
+        return JObject.Parse(await res.Content.ReadAsStringAsync()).ToObject<DojoGroup>() ?? throw new WarningException($"New team '{teamName}' could not be retrieved");
     }
 
     public async Task<User?> GetDefectDojoUserByUsername(string applicationOwner)
@@ -72,7 +71,7 @@ public class DefectDojoConnector
         return ((JArray)results)[0].ToObject<User>();
     }
 
-    public async Task<int> CreateDojoUser(string username)
+    public async Task<User> CreateDojoUser(string username)
     {
         var body = new
         {
@@ -83,7 +82,7 @@ public class DefectDojoConnector
         var response = await httpClient.PostAsync("users/", content);
         if(!response.IsSuccessStatusCode) 
             throw new Exception($"Error while creating the User. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return (JObject.Parse(await response.Content.ReadAsStringAsync()))["id"]?.ToObject<int>()??
+        return (JObject.Parse(await response.Content.ReadAsStringAsync())).ToObject<User>()??
                throw new Exception($"New User '{username}' could not be retrieved");
     }
 }

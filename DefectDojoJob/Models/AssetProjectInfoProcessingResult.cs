@@ -1,14 +1,42 @@
 ﻿namespace DefectDojoJob.Services;
 
-public class AssetProjectInfoProcessingResult
+public class AssetProjectInfoProcessingResult : IProcessingResult
 {
     public int ProductId { get; set; }
-    public int TeamId { get; set; }
-    public int AssetId { get; set; }
+    public TeamProcessingResult TeamProcessingResult { get; set; }
+    public UserProcessingResult ApplicationOwnerProcessingResult { get; set; }
+    public UserProcessingResult ApplicationOwnerBUProcessingResult { get; set; }
+    public UserProcessingResult FunctionalOwnerProcessingResult { get; set; }
     public AssetProjectInfoProcessingAction Action { get; set; }
-    public bool HasErrors { get; set; }
-    public bool HasWarnings { get; set; }
+    public int EntityId { get; set; }
     public List<string> Errors { get; set; } = new();
     public List<string> Warnings { get; set; } = new();
-    public List<int> UserIds { get; set; } = new();
+    public bool ProcessingSuccessful { get; set; }
+
+}
+
+public class UserProcessingResult: IProcessingResult
+{
+    public int EntityId { get; set; }
+    public List<string> Errors { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
+    public bool ProcessingSuccessful { get; set; }
+
+}
+
+public class TeamProcessingResult : IProcessingResult
+{
+    public int EntityId { get; set; }
+    public List<string> Errors { get; set; } = new();
+    public List<string> Warnings { get; set; } = new();
+    public bool ProcessingSuccessful { get; set; }
+
+}
+
+public interface IProcessingResult
+{
+    public int EntityId { get; set; }
+    public List<string> Errors { get; set; }
+    public List<string> Warnings { get; set; }
+    public bool ProcessingSuccessful { get; set; }
 }

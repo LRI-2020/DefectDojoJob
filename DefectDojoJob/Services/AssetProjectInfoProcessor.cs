@@ -20,47 +20,56 @@ public class AssetProjectInfoProcessor
     {
         var errors = new List<string>();
         var warnings = new List<string>();
-        var result = new AssetProjectInfoProcessingResult()
+        var result = new AssetProjectInfoProcessingResult
         {
-            AssetId = assetProjectInfo.Id
+            EntityId = assetProjectInfo.Id,
+            TeamProcessingResult = await TeamProcessorAsync(assetProjectInfo),
+            ApplicationOwnerProcessingResult = await ProcessUserAsync(nameof(assetProjectInfo.ApplicationOwner),
+                assetProjectInfo.ApplicationOwner,null),
+            ApplicationOwnerBUProcessingResult = await ProcessUserAsync(nameof(assetProjectInfo.ApplicationOwnerBackUp),
+                assetProjectInfo.ApplicationOwnerBackUp,null),
+            FunctionalOwnerProcessingResult = await ProcessUserAsync(nameof(assetProjectInfo.FunctionalOwner),
+                assetProjectInfo.FunctionalOwner,null),
+            //FullFill errors - concatenation?
+            Errors = errors,
+            Warnings = warnings
         };
-        try
-        {
-            result.TeamId = await TeamProcessorAsync(assetProjectInfo);
-            result.UserIds.Add(await ProcessUserAsync(nameof(assetProjectInfo.ApplicationOwner),
-                assetProjectInfo.ApplicationOwner));
-            result.UserIds.Add(await ProcessUserAsync(nameof(assetProjectInfo.ApplicationOwnerBackUp),
-                assetProjectInfo.ApplicationOwnerBackUp));
-            result.UserIds.Add(await ProcessUserAsync(nameof(assetProjectInfo.FunctionalOwner),
-                assetProjectInfo.FunctionalOwner));
-        }
-        catch (Exception e)
-        {
-            if (e is WarningAssetProjectInfoProcessor)
-                warnings.Add(e.Message);
-            else
-            {
-                errors.Add(e.Message);
-            }
-        }
 
-        result.Errors = errors;
-        result.Warnings = warnings;
         return result;
     }
 
-    private async Task<int> TeamProcessorAsync(AssetProjectInfo assetProjectInfo)
+    private async Task<TeamProcessingResult> TeamProcessorAsync(AssetProjectInfo assetProjectInfo)
     {
-        if (string.IsNullOrEmpty(assetProjectInfo.Team)) throw new WarningAssetProjectInfoProcessor("No Team provided");
-        var team = await defectDojoConnector.GetDefectDojoGroupByNameAsync(assetProjectInfo.Team);
-        if (team != null) return team.Id;
-        return await defectDojoConnector.CreateDojoGroup(assetProjectInfo.Team);
+        var res = new TeamProcessingResult{ProcessingSuccessful = true};
+        if (string.IsNullOrEmpty(assetProjectInfo.Team))
+        {
+            res.EntityId = -1;
+            res.ProcessingSuccessful = false;
+            res.Warnings.Add("No Team provided");
+        }
+
+        try
+        {
+            var team = await defectDojoConnector.GetDefectDojoGroupByNameAsync(assetProjectInfo.Team!)?? await defectDojoConnector.CreateDojoGroup(assetProjectInfo.Team);
+            res.EntityId = team.Id;
+        }
+        catch (Exception e)
+        {
+            if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
+            else
+            {
+                res.Errors.Add(e.Message);
+                res.ProcessingSuccessful = false;
+            }
+        }
+
+        return res;
     }
 
-    //Process users in single method but then, cannot have specific errors or warning messages
-    private async Task<List<int>> UsersProcessorAsync(AssetProjectInfo assetProjectInfo)
+//Process users in single method but then, cannot have specific errors or warning messages
+    private async Task<List<UserProcessingResult>> UsersProcessorAsync(AssetProjectInfo assetProjectInfo)
     {
-        var res = new List<int>();
+        var res = new List<UserProcessingResult>();
 
         var users = new Dictionary<string, string?>()
         {
@@ -71,18 +80,44 @@ public class AssetProjectInfoProcessor
 
         foreach (var kvp in users)
         {
-            res.Add(await ProcessUserAsync(kvp.Key,kvp.Value));
+            res.Add(await ProcessUserAsync(kvp.Key, kvp.Value,null));
         }
 
         return res;
     }
 
-    private async Task<int> ProcessUserAsync(string key, string? username)
+    private async Task<UserProcessingResult> ProcessUserAsync(string key, string? username, int? teamId)
     {
-        if (string.IsNullOrEmpty(username)) throw new WarningAssetProjectInfoProcessor($"No {key} provided");
-        var user = await defectDojoConnector.GetDefectDojoUserByUsername(username);
-        if (user != null) return user.Id;
-        return await defectDojoConnector.CreateDojoUser(username);
+        var res = new UserProcessingResult{ ProcessingSuccessful = true };
+        if (string.IsNullOrEmpty(username))
+        {
+            res.Warnings.Add($"Warning : No {key} provided");
+            res.ProcessingSuccessful = false;
+            res.EntityId = -1;
+            return res;
+        }
+
+        try
+        {
+            var user = await defectDojoConnector.GetDefectDojoUserByUsername(username) ?? await defectDojoConnector.CreateDojoUser(username);
+            res.EntityId = user.Id;
+        }
+        catch (Exception e)
+        {
+            if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
+            else
+            {
+                res.Errors.Add(e.Message);
+                res.ProcessingSuccessful = false;
+            }
+        }
+
+        return res;
+    }
+
+    private async Task<bool> AddUserToTeamAsync(int userId)
+    {
+        throw new NotImplementedException();
     }
 
     private bool ProductProcessor(AssetProjectInfo assetProjectInfo)
