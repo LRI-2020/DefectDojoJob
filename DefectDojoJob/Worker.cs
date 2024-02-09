@@ -24,16 +24,7 @@ public class Worker : BackgroundService
         _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
         var projectsInfo = (await initialLoadService.FetchInitialLoadAsync()).ToList();
 
-        var results = new List<AssetProjectInfoProcessingResult>();
-        foreach (var assetProjectInfo in projectsInfo)
-        {
-            var res = await assetProjectInfoProcessor.ProcessAssetProjectInfo(assetProjectInfo);
-            results.Add(res);
-        };
-        
-        results.ForEach(r =>
-        {
-            Console.WriteLine(JsonConvert.SerializeObject(r));
-        });
+        var results = await assetProjectInfoProcessor.StartProcessingAsync(projectsInfo);
+      
     }
 }

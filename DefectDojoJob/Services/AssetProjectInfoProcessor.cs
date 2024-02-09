@@ -1,9 +1,4 @@
-﻿using System.ComponentModel;
-using System.Net.Http.Json;
-using System.Net.Security;
-using System.Text.Json;
-using DefectDojoJob.Models;
-using DefectDojoJob.Models.DefectDojo;
+﻿using DefectDojoJob.Models;
 
 namespace DefectDojoJob.Services;
 
@@ -16,100 +11,111 @@ public class AssetProjectInfoProcessor
         this.defectDojoConnector = defectDojoConnector;
     }
 
-    public async Task<AssetProjectInfoProcessingResult> ProcessAssetProjectInfo(AssetProjectInfo assetProjectInfo)
+    public async Task<ProcessingResult> StartProcessingAsync(List<AssetProjectInfo> assetProjectInfos)
     {
-        var errors = new List<string>();
-        var warnings = new List<string>();
-        var result = new AssetProjectInfoProcessingResult
-        {
-            EntityId = assetProjectInfo.Id,
-            TeamProcessingResult = await TeamProcessorAsync(assetProjectInfo),
-            ApplicationOwnerProcessingResult = await ProcessUserAsync(nameof(assetProjectInfo.ApplicationOwner),
-                assetProjectInfo.ApplicationOwner,null),
-            ApplicationOwnerBUProcessingResult = await ProcessUserAsync(nameof(assetProjectInfo.ApplicationOwnerBackUp),
-                assetProjectInfo.ApplicationOwnerBackUp,null),
-            FunctionalOwnerProcessingResult = await ProcessUserAsync(nameof(assetProjectInfo.FunctionalOwner),
-                assetProjectInfo.FunctionalOwner,null),
-            //FullFill errors - concatenation?
-            Errors = errors,
-            Warnings = warnings
-        };
+        var processingResult = new ProcessingResult();
+        var teams = ExtractTeams(assetProjectInfos).ToList();
+        if (teams.Any()) processingResult.TeamsResult = await TeamsProcessorAsync(teams);
 
-        return result;
+        var users = ExtractUsers(assetProjectInfos).ToList();
+        if (users.Any()) processingResult.UsersResult = await UsersProcessorAsync(users);
+
+        return processingResult;
     }
 
-    private async Task<TeamProcessingResult> TeamProcessorAsync(AssetProjectInfo assetProjectInfo)
+    private async Task<List<UserEntityProcessingResult>> UsersProcessorAsync(List<string> userNames)
     {
-        var res = new TeamProcessingResult{ProcessingSuccessful = true};
-        if (string.IsNullOrEmpty(assetProjectInfo.Team))
+        var res = new List<UserEntityProcessingResult>();
+        foreach (var userName in userNames)
         {
-            res.EntityId = -1;
-            res.ProcessingSuccessful = false;
-            res.Warnings.Add("No Team provided");
-        }
-
-        try
-        {
-            var team = await defectDojoConnector.GetDefectDojoGroupByNameAsync(assetProjectInfo.Team!)?? await defectDojoConnector.CreateDojoGroup(assetProjectInfo.Team);
-            res.EntityId = team.Id;
-        }
-        catch (Exception e)
-        {
-            if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
-            else
-            {
-                res.Errors.Add(e.Message);
-                res.ProcessingSuccessful = false;
-            }
+            res.Add(await ProcessUserAsync(userName));
         }
 
         return res;
     }
 
-//Process users in single method but then, cannot have specific errors or warning messages
-    private async Task<List<UserProcessingResult>> UsersProcessorAsync(AssetProjectInfo assetProjectInfo)
+    private async Task<List<TeamEntityProcessingResult>> TeamsProcessorAsync(List<string> teamNames)
     {
-        var res = new List<UserProcessingResult>();
-
-        var users = new Dictionary<string, string?>()
+        var res = new List<TeamEntityProcessingResult>();
+        foreach (var teamName in teamNames)
         {
-            { nameof(assetProjectInfo.ApplicationOwner), assetProjectInfo.ApplicationOwner },
-            { nameof(assetProjectInfo.ApplicationOwnerBackUp), assetProjectInfo.ApplicationOwnerBackUp },
-            { nameof(assetProjectInfo.FunctionalOwner), assetProjectInfo.FunctionalOwner }
-        };
-
-        foreach (var kvp in users)
-        {
-            res.Add(await ProcessUserAsync(kvp.Key, kvp.Value,null));
+            res.Add(await ProcessTeamAsync(teamName));
         }
 
         return res;
     }
 
-    private async Task<UserProcessingResult> ProcessUserAsync(string key, string? username, int? teamId)
+    private async Task<TeamEntityProcessingResult> ProcessTeamAsync(string teamName)
     {
-        var res = new UserProcessingResult{ ProcessingSuccessful = true };
-        if (string.IsNullOrEmpty(username))
+        var res = new TeamEntityProcessingResult
         {
-            res.Warnings.Add($"Warning : No {key} provided");
-            res.ProcessingSuccessful = false;
-            res.EntityId = -1;
-            return res;
-        }
+            AssetIdentifier = teamName,
+            ProcessingSuccessful = true
+        };
 
         try
         {
-            var user = await defectDojoConnector.GetDefectDojoUserByUsername(username) ?? await defectDojoConnector.CreateDojoUser(username);
-            res.EntityId = user.Id;
+            var team = await defectDojoConnector.GetDefectDojoGroupByNameAsync(teamName);
+            if (team != null) res.DefectDojoId = team.Id;
+            else
+            {
+                res.Warnings.Add($"Team {teamName} not found in Defect Dojo");
+                res.DefectDojoId = -1;
+            }
         }
         catch (Exception e)
         {
-            if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
+            res.Errors.Add(e.Message);
+            res.ProcessingSuccessful = false;
+        }
+
+        return res;
+    }
+
+    private IEnumerable<string> ExtractUsers(List<AssetProjectInfo> assetProjectInfos)
+    {
+        var applicationOwners = assetProjectInfos
+            .Where(t => !string.IsNullOrEmpty(t.ApplicationOwner?.Trim()))
+            .Select(a => a.ApplicationOwner);
+
+        var applicationOwnersBP = assetProjectInfos
+            .Where(t => !string.IsNullOrEmpty(t.ApplicationOwnerBackUp?.Trim()))
+            .Select(a => a.ApplicationOwnerBackUp);
+
+        var functionalOwners = assetProjectInfos
+            .Where(t => !string.IsNullOrEmpty(t.FunctionalOwner?.Trim()))
+            .Select(a => a.FunctionalOwner);
+
+        return applicationOwners.Concat(applicationOwnersBP).Concat(functionalOwners).Distinct()!;
+    }
+
+    private IEnumerable<string> ExtractTeams(IEnumerable<AssetProjectInfo> assetProjectInfos)
+    {
+        return assetProjectInfos
+            .Where(t => !string.IsNullOrEmpty(t.Team?.Trim()))
+            .Select(a => a.Team)
+            .Distinct()!;
+    }
+
+
+    private async Task<UserEntityProcessingResult> ProcessUserAsync(string username)
+    {
+        var res = new UserEntityProcessingResult { ProcessingSuccessful = true };
+        try
+        {
+            var user = await defectDojoConnector.GetDefectDojoUserByUsername(username);
+            if (user != null) res.DefectDojoId = user.Id;
             else
             {
-                res.Errors.Add(e.Message);
+                res.DefectDojoId = -1;
+                res.Warnings.Add($"Warning : user {username} does not exist in Defect Dojo");
                 res.ProcessingSuccessful = false;
             }
+        }
+        catch (Exception e)
+        {
+            res.Errors.Add(e.Message);
+            res.ProcessingSuccessful = false;
         }
 
         return res;
