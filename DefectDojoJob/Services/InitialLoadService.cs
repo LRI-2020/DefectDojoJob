@@ -1,9 +1,6 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
-using DefectDojoJob.Models;
+﻿using DefectDojoJob.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
 
 namespace DefectDojoJob.Services;
 

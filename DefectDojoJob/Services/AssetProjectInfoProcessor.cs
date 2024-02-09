@@ -71,40 +71,6 @@ public class AssetProjectInfoProcessor
         return res;
     }
 
-    private async Task<TeamsProcessingResult> TeamsProcessorAsync(List<string> teamNames)
-    {
-        var res = new TeamsProcessingResult();
-        foreach (var teamName in teamNames)
-        {
-            try
-            {
-                res.Entities.Add(await ProcessTeamAsync(teamName));
-            }
-            catch (Exception e)
-            {
-                if (e is WarningAssetProjectInfoProcessor warning) res.Warnings.Add(warning);
-                else
-                {
-                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, teamName, EntityType.Team));
-                }
-            }
-        }
-
-        return res;
-    }
-
-    private async Task<AssetToDefectDojoMapper> ProcessTeamAsync(string teamName)
-    {
-        var team = await defectDojoConnector.GetDefectDojoGroupByNameAsync(teamName);
-        if (team != null)
-        {
-            return new AssetToDefectDojoMapper(teamName, team.Id);
-        }
-
-        throw new WarningAssetProjectInfoProcessor($"Team {teamName} not found in Defect Dojo", teamName, EntityType.Team);
-    }
-
-
     private async Task<AssetToDefectDojoMapper> ProcessUserAsync(string username)
     {
         var user = await defectDojoConnector.GetDefectDojoUserByUsername(username);
