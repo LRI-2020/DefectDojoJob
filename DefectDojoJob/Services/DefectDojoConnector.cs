@@ -78,18 +78,18 @@ public class DefectDojoConnector
         {
             username
         };
-        var content = new StringContent(JsonSerializer.Serialize(body),Encoding.UTF8,
+        var content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8,
             "application/json");
         var response = await httpClient.PostAsync("users/", content);
-        if(!response.IsSuccessStatusCode) 
+        if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while creating the User. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return (JObject.Parse(await response.Content.ReadAsStringAsync())).ToObject<User>()??
+        return (JObject.Parse(await response.Content.ReadAsStringAsync())).ToObject<User>() ??
                throw new Exception($"New User '{username}' could not be retrieved");
     }
 
-    public async Task<Product?> CreateProductAsync(string projectInfoName, string description, int productType, State state,
-        int? teamId, int? applicationOwnerId, int? applicationOwnerBackUpId, int? functionalOwnerId,
-        int? numberOfUsers,bool openToPartner = false)
+    public async Task<Product> CreateProductAsync(string projectInfoName, string description, int productType, Lifecycle? lifecycle,
+        int? applicationOwnerId, int? applicationOwnerBackUpId, int? functionalOwnerId,
+        int? numberOfUsers, bool openToPartner = false)
     {
         var body = new
         {
@@ -101,22 +101,18 @@ public class DefectDojoConnector
             product_manager = functionalOwnerId,
             user_records = numberOfUsers,
             external_audience = openToPartner,
-            lifecycle = state
+            lifecycle = lifecycle.ToString()
         };
 
-        var content = new StringContent(JsonConvert.SerializeObject(body),Encoding.UTF8,"application/json");
-        var response = await httpClient.PostAsync("products/", content);
-        if(!response.IsSuccessStatusCode) 
-            throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>()??
-               throw new Exception($"New Project '{projectInfoName}' could not be retrieved");
-
+        var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+        Console.WriteLine(await content.ReadAsStringAsync());
+        // var response = await httpClient.PostAsync("products/", content);
+//         if(!response.IsSuccessStatusCode) 
+//             throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
+//         return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>()??
+//                throw new Exception($"New Product '{projectInfoName}' could not be retrieved");
+//
+        return new Product("test", "test");
     }
-}
 
-public enum State
-{
-    construction, 
-    production, 
-    retirement
 }

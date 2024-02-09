@@ -25,22 +25,10 @@ public class Product
 
     [JsonProperty("product_meta")] public List<ProductMeta> ProductMetas { get; set; } = new();
     public DateTime? Created { get; }
-    public State Lifecycle { get; set; }
+    public Lifecycle Lifecycle { get; set; }
     [JsonProperty("user_records")] public int? UserRecords { get; set; }
     [JsonProperty("external_audience")] public bool? ExternalAudience { get; set; }
     [JsonProperty("product_manager")] public int? ProductManager { get; set; }
     [JsonProperty("technical_contact")] public int? TechnicalContact { get; set; }
     [JsonProperty("team_manager")] public int? TeamManager { get; set; }
-}
-
-public class ProductMeta
-{
-    [JsonProperty(Required = Required.Always)]
-    public int Id { get; set; }
-
-    [JsonProperty(Required = Required.Always)]
-    public string Name { get; set; }
-
-    [JsonProperty(Required = Required.Always)]
-    public string Value { get; set; }
 }

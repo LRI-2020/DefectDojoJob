@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-using DefectDojoJob.Models;
-using DefectDojoJob.Models.DefectDojo;
+﻿using DefectDojoJob.Models;
 using DefectDojoJob.Models.Processor;
 
 namespace DefectDojoJob.Services;
@@ -18,11 +16,11 @@ public class AssetProjectInfoProcessor
     {
         var processingResult = new ProcessingResult();
         var extraction = ExtractEntities(assetProjectInfos);
-        if (extraction.Teams.Any()) processingResult.TeamsProcessingResult = await TeamsProcessorAsync(extraction.Teams.ToList());
+        //will be usable if we must create team in DD and link user to team through group member object
+        //if (extraction.Teams.Any()) processingResult.TeamsProcessingResult = await TeamsProcessorAsync(extraction.Teams.ToList());
         if (extraction.Users.Any()) processingResult.UsersProcessingResult = await UsersProcessorAsync(extraction.Users.ToList());
 
         processingResult.ProductsProcessingResult = await ProductsProcessorAsync(assetProjectInfos,
-            processingResult.TeamsProcessingResult.Entities,
             processingResult.UsersProcessingResult.Entities);
 
         return processingResult;
@@ -59,11 +57,10 @@ public class AssetProjectInfoProcessor
             try
             {
                 res.Entities.Add(await ProcessUserAsync(userName));
-
             }
             catch (Exception e)
             {
-                if (e is WarningException) res.Warnings.Add(e.Message);
+                if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
                 else
                 {
                     res.Errors.Add(e.Message);
@@ -85,7 +82,7 @@ public class AssetProjectInfoProcessor
             }
             catch (Exception e)
             {
-                if (e is WarningException) res.Warnings.Add(e.Message);
+                if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
                 else
                 {
                     res.Errors.Add(e.Message);
@@ -104,7 +101,7 @@ public class AssetProjectInfoProcessor
             return (teamName, team.Id);
         }
 
-        throw new WarningException($"Team {teamName} not found in Defect Dojo");
+        throw new WarningAssetProjectInfoProcessor($"Team {teamName} not found in Defect Dojo", teamName, EntityType.Team);
     }
 
 
@@ -116,32 +113,68 @@ public class AssetProjectInfoProcessor
             return (username, user.Id);
         }
 
-        throw new WarningException($"Warning : user {username} does not exist in Defect Dojo");
+        throw new WarningAssetProjectInfoProcessor($"Warning : user {username} does not exist in Defect Dojo", username, EntityType.User);
     }
 
-    private async Task<ProductsProcessingResult> ProductsProcessorAsync(List<AssetProjectInfo> projects, 
-        List<(string AssetIdentifier,int DefectDojoId)> teams, 
-        List<(string AssetIdentifier,int DefectDojoId)> users)
+    private async Task<ProductsProcessingResult> ProductsProcessorAsync(List<AssetProjectInfo> projects,
+        List<(string AssetIdentifier, int DefectDojoId)> users)
     {
-        var res = new ProductsProcessingResult();
+        var result = new ProductsProcessingResult();
         foreach (var project in projects)
         {
-            await ProcessProduct(project, teams, users);
+            try
+            {
+                result.Entities.Add(await ProcessProduct(project, users));
+            }
+            catch (Exception e)
+            {
+                if (e is WarningAssetProjectInfoProcessor) result.Warnings.Add(e.Message);
+                else
+                {
+                    result.Errors.Add(e.Message);
+                }
+            }
         }
 
-        return res;
+        return result;
     }
 
     private async Task<(string AssetIdentifier, int DefectDojoId)> ProcessProduct(AssetProjectInfo projectInfo,
-        List<(string AssetIdentifier,int DefectDojoId)> teams, 
-        List<(string AssetIdentifier,int DefectDojoId)> users)
+        List<(string AssetIdentifier, int DefectDojoId)> users)
     {
-        //Create Product - stop if error;
-        var description = projectInfo.ShortDescription + projectInfo.DetailedDescription;
-        await defectDojoConnector.CreateProductAsync(projectInfo.Name, description ?? "Enter a description");
+        //TODO ProductType Processing!!
+        var description = $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
+        var productType = 1;
+        var lifecycle = MatchLifeCycle(projectInfo.State);
 
-        //LInk product to team
-        //Link product to users
-        //Link product to
+        var appOwnerId = users
+            .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwner)
+            .DefectDojoId;
+        var appOwnerBuId = users
+            .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwnerBackUp)
+            .DefectDojoId;
+        var funcOwnerId = users
+            .Find(u => u.AssetIdentifier == projectInfo.FunctionalOwner)
+            .DefectDojoId;
+
+        var product = await defectDojoConnector.CreateProductAsync(projectInfo.Name, description ?? "Enter a description",
+            productType, lifecycle, appOwnerId != 0 ? appOwnerId : null,
+            appOwnerBuId != 0 ? appOwnerBuId : null, funcOwnerId != 0 ? funcOwnerId : null,
+            projectInfo.NumberOfUsers, projectInfo.OpenToPartner ?? false);
+        return (projectInfo.Name, product.Id);
+    }
+
+    private Lifecycle? MatchLifeCycle(string? state)
+    {
+        if (string.IsNullOrEmpty(state)) return null;
+        switch (state.Trim())
+        {
+            case "EnConstruction": return Lifecycle.construction;
+            case "EnService":
+            case "EnCoursDeDeclassement":
+                return Lifecycle.production;
+            case "Declassee": return Lifecycle.retirement;
+            default: return null;
+        }
     }
 }
