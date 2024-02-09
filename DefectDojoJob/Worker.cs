@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Threading.Channels;
 using DefectDojoJob.Services;
 using Newtonsoft.Json;
@@ -8,14 +9,12 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly InitialLoadService initialLoadService;
-    private readonly DefectDojoConnector defectDojoConnector;
     private readonly AssetProjectInfoProcessor assetProjectInfoProcessor;
 
-    public Worker(ILogger<Worker> logger, InitialLoadService initialLoadService, DefectDojoConnector defectDojoConnector, AssetProjectInfoProcessor assetProjectInfoProcessor)
+    public Worker(ILogger<Worker> logger, InitialLoadService initialLoadService, AssetProjectInfoProcessor assetProjectInfoProcessor)
     {
         _logger = logger;
         this.initialLoadService = initialLoadService;
-        this.defectDojoConnector = defectDojoConnector;
         this.assetProjectInfoProcessor = assetProjectInfoProcessor;
     }
 
@@ -25,6 +24,8 @@ public class Worker : BackgroundService
         var projectsInfo = (await initialLoadService.FetchInitialLoadAsync()).ToList();
 
         var results = await assetProjectInfoProcessor.StartProcessingAsync(projectsInfo);
+
+        Console.WriteLine(JsonConvert.SerializeObject(results));
       
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Unicode;
 using DefectDojoJob.Helpers;
 using DefectDojoJob.Models.DefectDojo;
 using Newtonsoft.Json;
@@ -85,4 +86,37 @@ public class DefectDojoConnector
         return (JObject.Parse(await response.Content.ReadAsStringAsync())).ToObject<User>()??
                throw new Exception($"New User '{username}' could not be retrieved");
     }
+
+    public async Task<Product?> CreateProductAsync(string projectInfoName, string description, int productType, State state,
+        int? teamId, int? applicationOwnerId, int? applicationOwnerBackUpId, int? functionalOwnerId,
+        int? numberOfUsers,bool openToPartner = false)
+    {
+        var body = new
+        {
+            name = projectInfoName,
+            description,
+            prod_type = productType,
+            team_manager = applicationOwnerBackUpId,
+            technical_contact = applicationOwnerId,
+            product_manager = functionalOwnerId,
+            user_records = numberOfUsers,
+            external_audience = openToPartner,
+            lifecycle = state
+        };
+
+        var content = new StringContent(JsonConvert.SerializeObject(body),Encoding.UTF8,"application/json");
+        var response = await httpClient.PostAsync("products/", content);
+        if(!response.IsSuccessStatusCode) 
+            throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
+        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>()??
+               throw new Exception($"New Project '{projectInfoName}' could not be retrieved");
+
+    }
+}
+
+public enum State
+{
+    construction, 
+    production, 
+    retirement
 }
