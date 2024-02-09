@@ -60,10 +60,10 @@ public class AssetProjectInfoProcessor
             }
             catch (Exception e)
             {
-                if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
+                if (e is WarningAssetProjectInfoProcessor warning) res.Warnings.Add(warning);
                 else
                 {
-                    res.Errors.Add(e.Message);
+                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, userName, EntityType.User));
                 }
             }
         }
@@ -82,10 +82,10 @@ public class AssetProjectInfoProcessor
             }
             catch (Exception e)
             {
-                if (e is WarningAssetProjectInfoProcessor) res.Warnings.Add(e.Message);
+                if (e is WarningAssetProjectInfoProcessor warning) res.Warnings.Add(warning);
                 else
                 {
-                    res.Errors.Add(e.Message);
+                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message,teamName,EntityType.Team));
                 }
             }
         }
@@ -128,10 +128,10 @@ public class AssetProjectInfoProcessor
             }
             catch (Exception e)
             {
-                if (e is WarningAssetProjectInfoProcessor) result.Warnings.Add(e.Message);
+                if (e is WarningAssetProjectInfoProcessor warning) result.Warnings.Add(warning);
                 else
                 {
-                    result.Errors.Add(e.Message);
+                    result.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message,project.Name,EntityType.Product));
                 }
             }
         }
@@ -161,6 +161,7 @@ public class AssetProjectInfoProcessor
             productType, lifecycle, appOwnerId != 0 ? appOwnerId : null,
             appOwnerBuId != 0 ? appOwnerBuId : null, funcOwnerId != 0 ? funcOwnerId : null,
             projectInfo.NumberOfUsers, projectInfo.OpenToPartner ?? false);
+  
         return (projectInfo.Name, product.Id);
     }
 

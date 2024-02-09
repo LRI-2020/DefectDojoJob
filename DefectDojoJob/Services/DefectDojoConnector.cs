@@ -101,18 +101,16 @@ public class DefectDojoConnector
             product_manager = functionalOwnerId,
             user_records = numberOfUsers,
             external_audience = openToPartner,
-            lifecycle = lifecycle.ToString()
+            lifecycle = lifecycle!=null?lifecycle.ToString():null
         };
 
         var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
         Console.WriteLine(await content.ReadAsStringAsync());
-        // var response = await httpClient.PostAsync("products/", content);
-//         if(!response.IsSuccessStatusCode) 
-//             throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-//         return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>()??
-//                throw new Exception($"New Product '{projectInfoName}' could not be retrieved");
-//
-        return new Product("test", "test");
+        var response = await httpClient.PostAsync("products/", content);
+        if(!response.IsSuccessStatusCode) 
+            throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
+        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>()??
+               throw new Exception($"New Product '{projectInfoName}' could not be retrieved");
     }
 
 }
