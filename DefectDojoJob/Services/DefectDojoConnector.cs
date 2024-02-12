@@ -31,31 +31,10 @@ public class DefectDojoConnector
             new Dictionary<string, string>() { { "name", name } });
 
         var response = await httpClient.GetAsync(url);
-        if (response.IsSuccessStatusCode)
-        {
-            var results = JObject.Parse(await response.Content.ReadAsStringAsync())["results"];
-            if (results == null || ((JArray)results).Count == 0) return null;
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
 
-            return ((JArray)results)[0].ToObject<DojoGroup>();
-        }
-
-        throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
-    }
-
-    public async Task<DojoGroup> CreateDojoGroup(string teamName)
-    {
-        var url = "dojo_groups/";
-        var body = new
-        {
-            name = teamName
-        };
-        var content = new StringContent(
-            JsonConvert.SerializeObject(body),
-            Encoding.UTF8,
-            "application/json");
-        var res = await httpClient.PostAsync(url, content);
-        if (!res.IsSuccessStatusCode) throw new Exception("Team could not be created");
-        return JObject.Parse(await res.Content.ReadAsStringAsync()).ToObject<DojoGroup>() ?? throw new WarningException($"New team '{teamName}' could not be retrieved");
+        return DefectDojoApiDeserializer<DojoGroup>.Deserialize(await response.Content.ReadAsStringAsync());
     }
 
     public async Task<User?> GetDefectDojoUserByUsername(string applicationOwner)
@@ -66,25 +45,19 @@ public class DefectDojoConnector
         var response = await httpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
-        var results = JObject.Parse(await response.Content.ReadAsStringAsync())["results"];
-        if (results == null || ((JArray)results).Count == 0) return null;
-
-        return ((JArray)results)[0].ToObject<User>();
+        return DefectDojoApiDeserializer<User>.Deserialize(await response.Content.ReadAsStringAsync());
     }
 
-    public async Task<User> CreateDojoUser(string username)
+    public async Task<ProductType?> GetProductTypeByNameAsync(string productTypeName)
     {
-        var body = new
+        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("product_types/", new Dictionary<string, string>()
         {
-            username
-        };
-        var content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8,
-            "application/json");
-        var response = await httpClient.PostAsync("users/", content);
+            { "name", productTypeName }
+        });
+        var response = await httpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode)
-            throw new Exception($"Error while creating the User. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return (JObject.Parse(await response.Content.ReadAsStringAsync())).ToObject<User>() ??
-               throw new Exception($"New User '{username}' could not be retrieved");
+            throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
+        return DefectDojoApiDeserializer<ProductType>.Deserialize(await response.Content.ReadAsStringAsync());
     }
 
     public async Task<Product> CreateProductAsync(string projectInfoName, string description, int productType, Lifecycle? lifecycle,
@@ -101,16 +74,16 @@ public class DefectDojoConnector
             product_manager = functionalOwnerId,
             user_records = numberOfUsers,
             external_audience = openToPartner,
-            lifecycle = lifecycle!=null?lifecycle.ToString():null
+            lifecycle = lifecycle != null ? lifecycle.ToString() : null
         };
 
         var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
         Console.WriteLine(await content.ReadAsStringAsync());
         var response = await httpClient.PostAsync("products/", content);
-        if(!response.IsSuccessStatusCode) 
+        if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>()??
+        var res = JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>();
+        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
                throw new Exception($"New Product '{projectInfoName}' could not be retrieved");
     }
-
 }

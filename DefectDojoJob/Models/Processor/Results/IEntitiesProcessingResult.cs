@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using DefectDojoJob.Models;
+using DefectDojoJob.Models.Processor.Errors;
 
 namespace DefectDojoJob.Services;
 

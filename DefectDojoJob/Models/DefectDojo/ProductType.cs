@@ -4,7 +4,7 @@ namespace DefectDojoJob.Models.DefectDojo;
 
 public class ProductType
 {
-    public ProductType(int id, DateTime updated, DateTime created, string name)
+    public ProductType(int id, DateTime? updated, DateTime? created, string name)
     {
         Id = id;
         Updated = updated;
@@ -19,6 +19,6 @@ public class ProductType
     public string Name { get; set; }
 
     public string? Description { get; set; }
-    public DateTime Updated { get; }
-    public DateTime Created { get; }
+    public DateTime? Updated { get; }
+    public DateTime? Created { get; }
 }

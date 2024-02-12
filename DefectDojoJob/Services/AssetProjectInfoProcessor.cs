@@ -1,15 +1,19 @@
 ﻿using DefectDojoJob.Models;
+using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
+using DefectDojoJob.Models.Processor.Errors;
 
 namespace DefectDojoJob.Services;
 
 public class AssetProjectInfoProcessor
 {
     private readonly DefectDojoConnector defectDojoConnector;
+    private readonly IConfiguration configuration;
 
-    public AssetProjectInfoProcessor(DefectDojoConnector defectDojoConnector)
+    public AssetProjectInfoProcessor(DefectDojoConnector defectDojoConnector, IConfiguration configuration)
     {
         this.defectDojoConnector = defectDojoConnector;
+        this.configuration = configuration;
     }
 
     public async Task<ProcessingResult> StartProcessingAsync(List<AssetProjectInfo> assetProjectInfos)
@@ -40,7 +44,7 @@ public class AssetProjectInfoProcessor
         return res;
     }
 
-    private List<string> ExtractUsers(AssetProjectInfo p)
+    private static List<string> ExtractUsers(AssetProjectInfo p)
     {
         var res = new List<string>();
         if (!string.IsNullOrEmpty(p.ApplicationOwner?.Trim())) res.Add(p.ApplicationOwner);
@@ -108,22 +112,22 @@ public class AssetProjectInfoProcessor
     private async Task<AssetToDefectDojoMapper> ProcessProduct(AssetProjectInfo projectInfo,
         List<AssetToDefectDojoMapper> users)
     {
-        //TODO ProductType Processing!!
-        var description = $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
-        var productType = 1;
+        var description = string.IsNullOrEmpty(projectInfo.ShortDescription) && string.IsNullOrEmpty(projectInfo.DetailedDescription)?
+            "Enter a description" : $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
+        var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Name);
         var lifecycle = MatchLifeCycle(projectInfo.State);
 
         var appOwnerId = users
             .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwner)
             ?.DefectDojoId;
         var appOwnerBuId = users
-            .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwnerBackUp)!
+            .Find(u => u.AssetIdentifier == projectInfo.ApplicationOwnerBackUp)?
             .DefectDojoId;
         var funcOwnerId = users
-            .Find(u => u.AssetIdentifier == projectInfo.FunctionalOwner)!
+            .Find(u => u.AssetIdentifier == projectInfo.FunctionalOwner)?
             .DefectDojoId;
 
-        var product = await defectDojoConnector.CreateProductAsync(projectInfo.Name, description ?? "Enter a description",
+        var product = await defectDojoConnector.CreateProductAsync(projectInfo.Name, description,
             productType, lifecycle, appOwnerId,
             appOwnerBuId, funcOwnerId,
             projectInfo.NumberOfUsers, projectInfo.OpenToPartner ?? false);
@@ -131,7 +135,24 @@ public class AssetProjectInfoProcessor
         return new AssetToDefectDojoMapper(projectInfo.Name, product.Id);
     }
 
-    private Lifecycle? MatchLifeCycle(string? state)
+    private async Task<int> GetProductTypeAsync(string? providedProductType, string assetIdentifier)
+    {
+        var defaultType = configuration["ProductType"];
+
+        if (string.IsNullOrEmpty(providedProductType) && string.IsNullOrEmpty(defaultType))
+            throw new ErrorAssetProjectInfoProcessor(
+                "no productType provided and none found in the configuration file", assetIdentifier, EntityType.Product);
+
+        ProductType? res;
+        if (!string.IsNullOrEmpty(providedProductType)) res = await defectDojoConnector.GetProductTypeByNameAsync(providedProductType);
+        else res = await defectDojoConnector.GetProductTypeByNameAsync(defaultType!);
+
+        return res?.Id??
+        throw new ErrorAssetProjectInfoProcessor(
+            $"No product type was found, neither with the provided type nor with the default type", assetIdentifier, EntityType.Product);
+    }
+
+    private static Lifecycle? MatchLifeCycle(string? state)
     {
         if (string.IsNullOrEmpty(state)) return null;
         switch (state.Trim())
