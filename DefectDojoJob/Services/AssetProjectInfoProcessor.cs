@@ -1,7 +1,7 @@
-﻿using DefectDojoJob.Models;
-using DefectDojoJob.Models.DefectDojo;
+﻿using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
+using DefectDojoJob.Models.Processor.Results;
 
 namespace DefectDojoJob.Services;
 
@@ -19,9 +19,10 @@ public class AssetProjectInfoProcessor
     public async Task<ProcessingResult> StartProcessingAsync(List<AssetProjectInfo> assetProjectInfos)
     {
         var processingResult = new ProcessingResult();
+
+        if (!assetProjectInfos.Any()) return processingResult;
+
         var extraction = ExtractEntities(assetProjectInfos);
-        //will be usable if we must create team in DD and link user to team through group member object
-        //if (extraction.Teams.Any()) processingResult.TeamsProcessingResult = await TeamsProcessorAsync(extraction.Teams.ToList());
         if (extraction.Users.Any()) processingResult.UsersProcessingResult = await UsersProcessorAsync(extraction.Users.ToList());
 
         processingResult.ProductsProcessingResult = await ProductsProcessorAsync(assetProjectInfos,
@@ -29,6 +30,7 @@ public class AssetProjectInfoProcessor
 
         return processingResult;
     }
+
 
     private Extraction ExtractEntities(List<AssetProjectInfo> assetProjectInfos)
     {
@@ -112,8 +114,9 @@ public class AssetProjectInfoProcessor
     private async Task<AssetToDefectDojoMapper> ProcessProduct(AssetProjectInfo projectInfo,
         List<AssetToDefectDojoMapper> users)
     {
-        var description = string.IsNullOrEmpty(projectInfo.ShortDescription) && string.IsNullOrEmpty(projectInfo.DetailedDescription)?
-            "Enter a description" : $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
+        var description = string.IsNullOrEmpty(projectInfo.ShortDescription) && string.IsNullOrEmpty(projectInfo.DetailedDescription)
+            ? "Enter a description"
+            : $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
         var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Name);
         var lifecycle = MatchLifeCycle(projectInfo.State);
 
@@ -147,9 +150,9 @@ public class AssetProjectInfoProcessor
         if (!string.IsNullOrEmpty(providedProductType)) res = await defectDojoConnector.GetProductTypeByNameAsync(providedProductType);
         else res = await defectDojoConnector.GetProductTypeByNameAsync(defaultType!);
 
-        return res?.Id??
-        throw new ErrorAssetProjectInfoProcessor(
-            $"No product type was found, neither with the provided type nor with the default type", assetIdentifier, EntityType.Product);
+        return res?.Id ??
+               throw new ErrorAssetProjectInfoProcessor(
+                   $"No product type was found, neither with the provided type nor with the default type", assetIdentifier, EntityType.Product);
     }
 
     private static Lifecycle? MatchLifeCycle(string? state)

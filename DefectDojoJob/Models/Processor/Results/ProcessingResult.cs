@@ -1,6 +1,6 @@
-﻿using DefectDojoJob.Models.DefectDojo;
+﻿using DefectDojoJob.Services;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Models.Processor.Results;
 
 public class ProcessingResult
 {

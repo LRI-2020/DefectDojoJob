@@ -1,7 +1,6 @@
-﻿using DefectDojoJob.Services;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
-namespace DefectDojoJob.Models;
+namespace DefectDojoJob.Models.Processor;
 
 public class AssetProjectInfo
 {
@@ -9,7 +8,13 @@ public class AssetProjectInfo
     public int Id { get; set; }
 
     [JsonProperty(Required = Required.Always)]
-    public string Name { get; set; }
+    public string Name { get; set; }    
+    
+    [JsonProperty(Required = Required.Always)]
+    public DateTimeOffset Created { get; set; }    
+    
+    [JsonProperty(Required = Required.Always)]
+    public DateTimeOffset Updated { get; set; }
 
     public string?  ProductType { get; set; }
 

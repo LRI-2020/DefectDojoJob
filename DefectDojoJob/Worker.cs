@@ -21,9 +21,9 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-        var projectsInfo = (await initialLoadService.FetchInitialLoadAsync()).ToList();
+        var LoadResult = (await initialLoadService.FetchInitialLoadAsync());
 
-        var results = await assetProjectInfoProcessor.StartProcessingAsync(projectsInfo);
+        var results = await assetProjectInfoProcessor.StartProcessingAsync(LoadResult.ProjectsToProcess);
 
         Console.WriteLine(JsonConvert.SerializeObject(results));
       

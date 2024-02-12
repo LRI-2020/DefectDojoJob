@@ -1,4 +1,4 @@
-﻿namespace DefectDojoJob.Models;
+﻿namespace DefectDojoJob.Models.Processor;
 
 public class AssetToDefectDojoMapper
 {

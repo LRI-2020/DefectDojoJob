@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 
-namespace DefectDojoJob.Models.DefectDojo;
+namespace DefectDojoJob.Helpers;
 
 public static class DefectDojoApiDeserializer<T>
 {

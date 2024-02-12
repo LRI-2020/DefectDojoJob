@@ -1,4 +1,5 @@
 ﻿using DefectDojoJob.Models;
+using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
 
 namespace DefectDojoJob.Services;

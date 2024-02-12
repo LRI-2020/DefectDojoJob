@@ -1,4 +1,7 @@
 ﻿using DefectDojoJob.Models;
+using DefectDojoJob.Models.Processor;
+using DefectDojoJob.Models.Processor.Errors;
+using DefectDojoJob.Models.Processor.Results;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -23,12 +26,14 @@ public class InitialLoadService
         return ((JProperty)obj[0]).Value.ToString();
     }
 
-    public async Task<IEnumerable<AssetProjectInfo>> FetchInitialLoadAsync()
+    public async Task<InitialLoadResult> FetchInitialLoadAsync()
     {
-        var jObjects = await FetchJsonDataAsync();
-        List<(JObject jObject, string error)> errors = new();
+        if (!DateTimeOffset.TryParse(configuration["LastRunDate"], out DateTimeOffset refDate))
+            throw new Exception("Last run date provided is invalid. Please correct the configuration file.");
 
-        var res = new List<AssetProjectInfo>();
+        var res = new InitialLoadResult();
+        var jObjects = await FetchJsonDataAsync();
+        
         foreach (var data in jObjects)
         {
             try
@@ -36,18 +41,19 @@ public class InitialLoadService
                 var projectInfo = data.ToObject<AssetProjectInfo>();
                 if (projectInfo == null) throw new Exception("Invalid json model provided");
                 assetProjectInfoValidator.Validate(projectInfo);
-                res.Add(projectInfo);
+                if(assetProjectInfoValidator.ShouldBeProcessed(refDate,projectInfo)) res.ProjectsToProcess.Add(projectInfo);
+                else res.DiscardedProjects.Add(projectInfo);
             }
             catch (Exception e)
             {
-                errors.Add((data, e.Message));
-                //TODO do something with errors
+                res.Errors.Add((data, e.Message));
             }
         }
 
         return res;
     }
-
+    
+   
     private async Task<IEnumerable<JObject>> FetchJsonDataAsync()
     {
         var response = await httpClient.GetAsync(configuration["AssetUrl"]);

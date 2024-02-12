@@ -1,4 +1,4 @@
-﻿namespace DefectDojoJob.Services;
+﻿namespace DefectDojoJob.Models.Processor;
 
 public enum EntityType
 {
