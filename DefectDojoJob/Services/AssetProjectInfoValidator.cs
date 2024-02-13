@@ -1,8 +1,9 @@
 ﻿using DefectDojoJob.Models.Processor;
+using DefectDojoJob.Models.Processor.Interfaces;
 
 namespace DefectDojoJob.Services;
 
-public class AssetProjectInfoValidator
+public class AssetProjectInfoValidator : IAssetProjectInfoValidator
 {
     public void Validate(AssetProjectInfo projectInfo)
     {

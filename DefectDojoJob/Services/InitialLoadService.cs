@@ -1,6 +1,7 @@
 ﻿using DefectDojoJob.Models;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
+using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Models.Processor.Results;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -10,10 +11,10 @@ namespace DefectDojoJob.Services;
 public class InitialLoadService
 {
     private readonly HttpClient httpClient;
-    private readonly AssetProjectInfoValidator assetProjectInfoValidator;
+    private readonly IAssetProjectInfoValidator assetProjectInfoValidator;
     private readonly IConfiguration configuration;
 
-    public InitialLoadService(HttpClient httpClient, AssetProjectInfoValidator assetProjectInfoValidator, IConfiguration configuration)
+    public InitialLoadService(HttpClient httpClient, IAssetProjectInfoValidator assetProjectInfoValidator, IConfiguration configuration)
     {
         this.httpClient = httpClient;
         this.assetProjectInfoValidator = assetProjectInfoValidator;
@@ -32,7 +33,18 @@ public class InitialLoadService
             throw new Exception("Last run date provided is invalid. Please correct the configuration file.");
 
         var res = new InitialLoadResult();
-        var jObjects = await FetchJsonDataAsync();
+        IEnumerable<JObject> jObjects;
+
+        try
+        {
+            jObjects = await FetchJsonDataAsync();
+
+        }
+        catch (Exception e)
+        {
+            res.Errors.Add((null, e.Message));
+            return res;
+        }
         
         foreach (var data in jObjects)
         {
@@ -56,9 +68,21 @@ public class InitialLoadService
    
     private async Task<IEnumerable<JObject>> FetchJsonDataAsync()
     {
-        var response = await httpClient.GetAsync(configuration["AssetUrl"]);
-        var jsonResponse = GetJsonResponseFromFireBase(await response.Content.ReadAsStringAsync());
-        return JsonConvert.DeserializeObject<List<JObject>>(jsonResponse) ??
-               new List<JObject>();
+        var url = configuration["AssetUrl"];
+
+        try
+        {
+            var response = await httpClient.GetAsync(url);
+            var jsonResponse = GetJsonResponseFromFireBase(await response.Content.ReadAsStringAsync());
+            return JsonConvert.DeserializeObject<List<JObject>>(jsonResponse) ??
+                   new List<JObject>();
+        }
+
+        catch (Exception e)
+        {
+            throw new Exception($"Error while loading the asset's file at url '{url}': {e.Message}");
+        }
+
+        
     }
 }

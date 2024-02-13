@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using DefectDojoJob;
+using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Services;
 
 IHost host = Host.CreateDefaultBuilder(args)
@@ -18,7 +19,7 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHttpClient<DefectDojoConnector>();
         services.AddTransient<InitialLoadService>();
         services.AddTransient<AssetProjectInfoProcessor>();
-        services.AddSingleton<AssetProjectInfoValidator>();
+        services.AddSingleton<IAssetProjectInfoValidator,AssetProjectInfoValidator>();
         services.AddLogging(o => { o.AddConsole(); });
     })
     .Build();
