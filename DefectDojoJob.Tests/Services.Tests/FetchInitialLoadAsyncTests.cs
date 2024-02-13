@@ -1,6 +1,4 @@
 using System.Net;
-using System.Runtime.CompilerServices;
-using AutoFixture.Xunit2;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Services;
@@ -10,7 +8,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Moq;
 
-namespace DefectDojoJob.Tests;
+namespace DefectDojoJob.Tests.Services.Tests;
 
 public class FetchInitialLoadAsyncTests
 {
@@ -42,7 +40,7 @@ public class FetchInitialLoadAsyncTests
         res.Errors[0].error.Should().Contain("url");
     }
 
-    [Theory, InlineAutoMoqData("./JsonInputFiles/AssetModelMissingRequired.json")]
+    [Theory, InlineAutoMoqData("./TestInputs/AssetModelMissingRequired.json")]
     public async Task WhenAssetModelMissingRequiredProp_ErrorAndNoEntityToProcess(string jsonPath,IAssetProjectInfoValidator assetProjectInfoValidator)
     {
         var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidator);
@@ -56,7 +54,7 @@ public class FetchInitialLoadAsyncTests
         });
     }
 
-    [Theory, InlineAutoMoqData("./JsonInputFiles/AssetModelIncorrectFormat.json")]
+    [Theory, InlineAutoMoqData("./TestInputs/AssetModelIncorrectFormat.json")]
     public async Task WhenAssetModelInvalidFormat_ErrorAndNoEntityToProcess(string jsonPath,IAssetProjectInfoValidator assetProjectInfoValidator)
     {
         var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidator);
@@ -70,7 +68,7 @@ public class FetchInitialLoadAsyncTests
         });
     }
     
-    [Theory, InlineAutoMoqData("./JsonInputFiles/ValidAssetProjectInformation.json")]
+    [Theory, InlineAutoMoqData("./TestInputs/ValidAssetProjectInformation.json")]
     public async Task WhenAssetCannotBeValidated_ErrorAndEntityNotProcessed(string jsonPath,Mock<IAssetProjectInfoValidator> assetProjectInfoValidatorMock)
     {
         assetProjectInfoValidatorMock.Setup(m => m.Validate(It.IsAny<AssetProjectInfo>()))
@@ -83,7 +81,7 @@ public class FetchInitialLoadAsyncTests
         
     }
 
-    [Theory, InlineAutoMoqData("./JsonInputFiles/ValidAssetProjectInformation.json")]
+    [Theory, InlineAutoMoqData("./TestInputs/ValidAssetProjectInformation.json")]
     public async Task WhenShouldBeProcessedTrue_AssetAddedToProcessList(string jsonPath,Mock<IAssetProjectInfoValidator> assetProjectInfoValidatorMock)
     {
         assetProjectInfoValidatorMock.Setup(m => m.ShouldBeProcessed(It.IsAny<DateTimeOffset>(),It.IsAny<AssetProjectInfo>()))
@@ -94,7 +92,7 @@ public class FetchInitialLoadAsyncTests
         res.DiscardedProjects.Should().BeEmpty();
   }
     
-    [Theory, InlineAutoMoqData("./JsonInputFiles/ValidAssetProjectInformation.json")]
+    [Theory, InlineAutoMoqData("./TestInputs/ValidAssetProjectInformation.json")]
     public async Task WhenShouldBeProcessedFalse_AssetAddedToDiscardedList(string jsonPath,Mock<IAssetProjectInfoValidator> assetProjectInfoValidatorMock)
     {
         assetProjectInfoValidatorMock.Setup(m => m.ShouldBeProcessed(It.IsAny<DateTimeOffset>(),It.IsAny<AssetProjectInfo>()))
@@ -104,13 +102,7 @@ public class FetchInitialLoadAsyncTests
         res.DiscardedProjects.Count.Should().Be(1);
         res.ProjectsToProcess.Should().BeEmpty();
     }
-
-    //several JObject returned by private load and 
-    // all valids - hp
-    //some can be processed
-    // some are discarded
-  
-    
+   
     private static InitialLoadService SutWithFakeHandler(string jsonPath, IAssetProjectInfoValidator assetProjectInfoValidator)
     {
         IConfiguration configuration = TestHelper.ConfigureInMemory("https://test.be", "2000-04-05");

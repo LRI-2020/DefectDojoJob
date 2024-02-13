@@ -27,10 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="InitialLoadService.Tests\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\DefectDojoJob\DefectDojoJob.csproj" />
     </ItemGroup>
 
@@ -46,6 +42,15 @@
       </None>
       <None Update="JsonInputFiles\ValidAssetProjectInformation.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="TestInputs\AssetModelIncorrectFormat.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestInputs\AssetModelMissingRequired.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestInputs\ValidAssetProjectInformation.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
