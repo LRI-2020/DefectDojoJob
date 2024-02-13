@@ -1,5 +1,7 @@
 using System.Net;
+using System.Runtime.CompilerServices;
 using AutoFixture.Xunit2;
+using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Services;
 using DefectDojoJob.Tests.AutoDataAttribute;
@@ -17,7 +19,7 @@ public class FetchInitialLoadAsyncTests
     [InlineAutoMoqData("2020")]
     public async Task WhenRefDateNotProvided_ExceptionThrown(string refDate, string url, HttpClient httpClient, IAssetProjectInfoValidator assetProjectInfoValidator)
     {
-        IConfiguration configuration = ConfigureInMemory(url, refDate);
+        IConfiguration configuration = TestHelper.ConfigureInMemory(url, refDate);
         var sut = new InitialLoadService(httpClient, assetProjectInfoValidator, configuration);
 
         var res = await sut.FetchInitialLoadAsync();
@@ -31,7 +33,7 @@ public class FetchInitialLoadAsyncTests
     [InlineAutoMoqData("invalidUrl", "2020-04-02")]
     public async Task WhenInvalidUrl_ErrorAndNoEntityToProcess(string url, string refDate, HttpClient httpClient, IAssetProjectInfoValidator assetProjectInfoValidator)
     {
-        IConfiguration configuration = ConfigureInMemory(url, refDate);
+        IConfiguration configuration = TestHelper.ConfigureInMemory(url, refDate);
         var sut = new InitialLoadService(httpClient, assetProjectInfoValidator, configuration);
 
         var res = await sut.FetchInitialLoadAsync();
@@ -43,10 +45,7 @@ public class FetchInitialLoadAsyncTests
     [Theory, InlineAutoMoqData("./JsonInputFiles/AssetModelMissingRequired.json")]
     public async Task WhenAssetModelMissingRequiredProp_ErrorAndNoEntityToProcess(string jsonPath,IAssetProjectInfoValidator assetProjectInfoValidator)
     {
-        IConfiguration configuration = ConfigureInMemory("https://test.be", "2000-04-05");
-        HttpClient httpClient = new HttpClient(GetFakeHandler(HttpStatusCode.Accepted,jsonPath));
-        var sut = new InitialLoadService(httpClient, assetProjectInfoValidator, configuration);
-
+        var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidator);
         var res = await sut.FetchInitialLoadAsync();
         res.ProjectsToProcess.Should().BeEmpty();
         res.DiscardedProjects.Should().BeEmpty();
@@ -60,10 +59,7 @@ public class FetchInitialLoadAsyncTests
     [Theory, InlineAutoMoqData("./JsonInputFiles/AssetModelIncorrectFormat.json")]
     public async Task WhenAssetModelInvalidFormat_ErrorAndNoEntityToProcess(string jsonPath,IAssetProjectInfoValidator assetProjectInfoValidator)
     {
-        IConfiguration configuration = ConfigureInMemory("https://test.be", "2000-04-05");
-        HttpClient httpClient = new HttpClient(GetFakeHandler(HttpStatusCode.Accepted,jsonPath));
-        var sut = new InitialLoadService(httpClient, assetProjectInfoValidator, configuration);
-
+        var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidator);
         var res = await sut.FetchInitialLoadAsync();
         res.ProjectsToProcess.Should().BeEmpty();
         res.DiscardedProjects.Should().BeEmpty();
@@ -74,38 +70,54 @@ public class FetchInitialLoadAsyncTests
         });
     }
     
- //Data is empty list
+    [Theory, InlineAutoMoqData("./JsonInputFiles/ValidAssetProjectInformation.json")]
+    public async Task WhenAssetCannotBeValidated_ErrorAndEntityNotProcessed(string jsonPath,Mock<IAssetProjectInfoValidator> assetProjectInfoValidatorMock)
+    {
+        assetProjectInfoValidatorMock.Setup(m => m.Validate(It.IsAny<AssetProjectInfo>()))
+            .Throws(new Exception());
+        var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidatorMock.Object);
+        var res = await sut.FetchInitialLoadAsync();
+        res.ProjectsToProcess.Should().BeEmpty();
+        res.DiscardedProjects.Should().BeEmpty();
+        res.Errors.Count.Should().Be(1);
+        
+    }
+
+    [Theory, InlineAutoMoqData("./JsonInputFiles/ValidAssetProjectInformation.json")]
+    public async Task WhenShouldBeProcessedTrue_AssetAddedToProcessList(string jsonPath,Mock<IAssetProjectInfoValidator> assetProjectInfoValidatorMock)
+    {
+        assetProjectInfoValidatorMock.Setup(m => m.ShouldBeProcessed(It.IsAny<DateTimeOffset>(),It.IsAny<AssetProjectInfo>()))
+            .Returns(true);
+        var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidatorMock.Object);
+        var res = await sut.FetchInitialLoadAsync();
+        res.ProjectsToProcess.Count.Should().Be(1);
+        res.DiscardedProjects.Should().BeEmpty();
+  }
+    
+    [Theory, InlineAutoMoqData("./JsonInputFiles/ValidAssetProjectInformation.json")]
+    public async Task WhenShouldBeProcessedFalse_AssetAddedToDiscardedList(string jsonPath,Mock<IAssetProjectInfoValidator> assetProjectInfoValidatorMock)
+    {
+        assetProjectInfoValidatorMock.Setup(m => m.ShouldBeProcessed(It.IsAny<DateTimeOffset>(),It.IsAny<AssetProjectInfo>()))
+            .Returns(false);
+        var sut = SutWithFakeHandler(jsonPath, assetProjectInfoValidatorMock.Object);
+        var res = await sut.FetchInitialLoadAsync();
+        res.DiscardedProjects.Count.Should().Be(1);
+        res.ProjectsToProcess.Should().BeEmpty();
+    }
+
     //several JObject returned by private load and 
-    // all valids
-    // some or all invalids
-    // cannot be parse to asset AssetProjectInfo
-    // are AssetProjectInfo but invalid (Validate throw exception) --> 
+    // all valids - hp
     //some can be processed
     // some are discarded
-
-    private IConfiguration ConfigureInMemory(string url, string refDate)
+  
+    
+    private static InitialLoadService SutWithFakeHandler(string jsonPath, IAssetProjectInfoValidator assetProjectInfoValidator)
     {
-        var inMemorySettings = new Dictionary<string, string>
-        {
-            { "AssetUrl", url },
-            { "LastRunDate", refDate }
-        };
-        return new ConfigurationBuilder()
-            .AddInMemoryCollection(inMemorySettings)
-            .Build();
+        IConfiguration configuration = TestHelper.ConfigureInMemory("https://test.be", "2000-04-05");
+        var fileContent = TestHelper.GetFileContent(jsonPath);
+        HttpClient httpClient = new HttpClient(TestHelper.GetFakeHandler(HttpStatusCode.Accepted,fileContent));
+        return new InitialLoadService(httpClient, assetProjectInfoValidator, configuration);
+
     }
 
-    private IConfiguration ConfigureJsonFile(string jsonPath)
-    {
-        return new ConfigurationBuilder()
-            .AddJsonFile(jsonPath)
-            .Build();
-    }
-
-    private FakeHttpMessageHandler GetFakeHandler(HttpStatusCode statusCode, string jsonPath )
-    {
-        using StreamReader reader = new(jsonPath);
-        var json = reader.ReadToEnd();
-        return new FakeHttpMessageHandler(statusCode, json);
-    }
 }

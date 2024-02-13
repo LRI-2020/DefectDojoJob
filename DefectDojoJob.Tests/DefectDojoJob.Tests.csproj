@@ -41,6 +41,12 @@
       <None Update="JsonInputFiles\AssetModelIncorrectFormat.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="JsonInputFiles\AssetCannotValidate.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="JsonInputFiles\ValidAssetProjectInformation.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

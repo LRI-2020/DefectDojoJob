@@ -42,14 +42,13 @@ public class InitialLoadService
         try
         {
             jObjects = await FetchJsonDataAsync();
-
         }
         catch (Exception e)
         {
             res.Errors.Add((null, e.Message));
             return res;
         }
-        
+
         foreach (var data in jObjects)
         {
             try
@@ -57,7 +56,7 @@ public class InitialLoadService
                 var projectInfo = data.ToObject<AssetProjectInfo>();
                 if (projectInfo == null) throw new Exception("Invalid json model provided");
                 assetProjectInfoValidator.Validate(projectInfo);
-                if(assetProjectInfoValidator.ShouldBeProcessed(refDate,projectInfo)) res.ProjectsToProcess.Add(projectInfo);
+                if (assetProjectInfoValidator.ShouldBeProcessed(refDate, projectInfo)) res.ProjectsToProcess.Add(projectInfo);
                 else res.DiscardedProjects.Add(projectInfo);
             }
             catch (Exception e)
@@ -68,8 +67,8 @@ public class InitialLoadService
 
         return res;
     }
-    
-   
+
+
     private async Task<IEnumerable<JObject>> FetchJsonDataAsync()
     {
         var url = configuration["AssetUrl"]!;
@@ -86,7 +85,5 @@ public class InitialLoadService
         {
             throw new Exception($"Error while loading the asset's file at url '{url}': {e.Message}");
         }
-
-        
     }
 }
