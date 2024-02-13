@@ -29,10 +29,14 @@ public class InitialLoadService
 
     public async Task<InitialLoadResult> FetchInitialLoadAsync()
     {
-        if (!DateTimeOffset.TryParse(configuration["LastRunDate"], out DateTimeOffset refDate))
-            throw new Exception("Last run date provided is invalid. Please correct the configuration file.");
-
         var res = new InitialLoadResult();
+
+        if (!DateTimeOffset.TryParse(configuration["LastRunDate"], out DateTimeOffset refDate))
+        {
+            res.Errors.Add((null, "Last run date provided is invalid. Please correct the configuration file."));
+            return res;
+        }
+
         IEnumerable<JObject> jObjects;
 
         try
@@ -68,7 +72,7 @@ public class InitialLoadService
    
     private async Task<IEnumerable<JObject>> FetchJsonDataAsync()
     {
-        var url = configuration["AssetUrl"];
+        var url = configuration["AssetUrl"]!;
 
         try
         {
