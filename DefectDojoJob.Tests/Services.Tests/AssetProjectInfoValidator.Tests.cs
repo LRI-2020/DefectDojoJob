@@ -2,11 +2,19 @@
 using DefectDojoJob.Services;
 using DefectDojoJob.Tests.AutoDataAttribute;
 using FluentAssertions;
+using Xunit.Abstractions;
 
-namespace DefectDojoJob.Tests;
+namespace DefectDojoJob.Tests.Services.Tests;
 
 public class AssetProjectInfoValidatorTests
 {
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public AssetProjectInfoValidatorTests(ITestOutputHelper testOutputHelper)
+    {
+        this.testOutputHelper = testOutputHelper;
+    }
+
     [Theory]
     [AutoMoqData]
     public void WhenProjectIdLowerThanZero_Exception(AssetProjectInfo pi)
@@ -17,7 +25,6 @@ public class AssetProjectInfoValidatorTests
         var act = () => sut.Validate(pi);
         act.Should().Throw<Exception>().Where(e => e.Message.ToLower().Contains("invalid") &&
                                                    e.Message.ToLower().Contains("id"));
-        ;
     }
 
     [Theory]
@@ -63,8 +70,32 @@ public class AssetProjectInfoValidatorTests
         var act = () => sut.Validate(pi);
         act.Should().NotThrow<Exception>();
     }
-    //ShouldBeProcessedMethod:
-    //Created Date and Updated Date older or equal to refDate
-    // CreatedDate or Updated Date null (cannot be?)
-    // CReate Date or Updated Date newer than RefDate
+
+    [Theory]
+    [InlineAutoMoqData("2020,01,02","2020-01-03","2020-01-03")]
+    [InlineAutoMoqData("2020,01,02","2020-01-03","2020-01-01")]
+    [InlineAutoMoqData("2020,01,02","2020-01-01","2020-01-03")]
+    public void WhenAtLeastOneDateGreaterThanRefDate_ShouldBeProcessed(string lastRunDate, string created, string updated,AssetProjectInfo pi, AssetProjectInfoValidator sut)
+    {
+        var refDate = new DateTimeOffset(DateTime.Parse(lastRunDate), new TimeSpan(0));
+        pi.Created = new DateTimeOffset(DateTime.Parse(created), new TimeSpan(0));
+        pi.Updated = new DateTimeOffset(DateTime.Parse(updated),new TimeSpan(0));
+
+        var res = sut.ShouldBeProcessed(refDate, pi);
+
+        res.Should().BeTrue();
+    }
+    [Theory]
+    [InlineAutoMoqData("2020,01,02","2020-01-02","2020-01-02")]
+    [InlineAutoMoqData("2020,01,02","2020-01-01","2020-01-01")]
+    public void WhenDatesLessThanOrEqualToRefDate_ShouldNotBeProcessed(string lastRunDate, string created, string updated,AssetProjectInfo pi, AssetProjectInfoValidator sut)
+    {
+        var refDate = new DateTimeOffset(DateTime.Parse(lastRunDate), new TimeSpan(0));
+        pi.Created = new DateTimeOffset(DateTime.Parse(created), new TimeSpan(0));
+        pi.Updated = new DateTimeOffset(DateTime.Parse(updated),new TimeSpan(0));
+
+        var res = sut.ShouldBeProcessed(refDate, pi);
+
+        res.Should().BeFalse();
+    }
 }
