@@ -5,19 +5,33 @@ using Newtonsoft.Json;
 
 namespace DefectDojoJob.Tests.Helpers.Tests;
 
+/// <summary>
+/// Fake the handler to define the response of the http call;
+/// Store the request body in the resquestBody property
+/// </summary>
 public class FakeHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode statusCode;
         private readonly string? responseContent;
-
-        public FakeHttpMessageHandler(HttpStatusCode statusCode, string jsonString = null)
+        public string? requestBody;
+      
+        public FakeHttpMessageHandler(HttpStatusCode statusCode, string? jsonString = null)
         {
             this.statusCode = statusCode;
-            this.responseContent = jsonString;
+            responseContent = jsonString;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            try
+            {
+                requestBody = await request.Content?.ReadAsStringAsync(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                requestBody = "error when retrieving requestBody";
+                Console.WriteLine(e.Message);
+            }
             var response = new HttpResponseMessage()
             {
                 StatusCode = statusCode,

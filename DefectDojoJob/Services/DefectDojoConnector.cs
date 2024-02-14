@@ -14,7 +14,7 @@ public class DefectDojoConnector
 {
     private readonly HttpClient httpClient;
 
-    public DefectDojoConnector(IConfiguration configuration, HttpClient httpClient, ILogger<DefectDojoConnector> logger)
+    public DefectDojoConnector(IConfiguration configuration, HttpClient httpClient)
     {
         this.httpClient = httpClient;
         this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", configuration["ApiToken"]);
@@ -30,7 +30,7 @@ public class DefectDojoConnector
         var response = await httpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return DefectDojoApiDeserializer<User>.Deserialize(await response.Content.ReadAsStringAsync());
+        return DefectDojoApiDeserializer<User>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
 
     public async Task<ProductType?> GetProductTypeByNameAsync(string productTypeName)
@@ -42,7 +42,7 @@ public class DefectDojoConnector
         var response = await httpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
-        return DefectDojoApiDeserializer<ProductType>.Deserialize(await response.Content.ReadAsStringAsync());
+        return DefectDojoApiDeserializer<ProductType>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
 
     public async Task<Product> CreateProductAsync(string projectInfoName, string description, int productType, Lifecycle? lifecycle,

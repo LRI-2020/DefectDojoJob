@@ -4,7 +4,7 @@ namespace DefectDojoJob.Helpers;
 
 public static class DefectDojoApiDeserializer<T>
 {
-    public static T? Deserialize(string response)
+    public static T? DeserializeFirstItemOfResults(string response)
     {
         var results = JObject.Parse(response)["results"];
         if (results == null || ((JArray)results).Count == 0) return default;

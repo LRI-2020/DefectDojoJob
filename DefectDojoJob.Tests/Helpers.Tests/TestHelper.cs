@@ -24,9 +24,9 @@ public static class TestHelper
             .Build();
     }
 
-    public static FakeHttpMessageHandler GetFakeHandler(HttpStatusCode statusCode, string json )
+    public static FakeHttpMessageHandler GetFakeHandler(HttpStatusCode statusCode, string? responseJson=null )
     {
-       return new FakeHttpMessageHandler(statusCode, json);
+       return new FakeHttpMessageHandler(statusCode, responseJson);
     }
 
     public static string GetFileContent(string jsonPath)
@@ -34,5 +34,7 @@ public static class TestHelper
         using StreamReader reader = new(jsonPath);
         return reader.ReadToEnd();
     }
+    
+    
 
 }
