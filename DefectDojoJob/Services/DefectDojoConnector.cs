@@ -13,30 +13,15 @@ namespace DefectDojoJob.Services;
 public class DefectDojoConnector
 {
     private readonly HttpClient httpClient;
-    private readonly ILogger<DefectDojoConnector> logger;
 
     public DefectDojoConnector(IConfiguration configuration, HttpClient httpClient, ILogger<DefectDojoConnector> logger)
     {
         this.httpClient = httpClient;
-        this.logger = logger;
         this.httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", configuration["ApiToken"]);
 
         var url = configuration["DefectDojoBaseUrl"];
         if (url != null) this.httpClient.BaseAddress = new Uri(url);
     }
-
-    public async Task<DojoGroup?> GetDefectDojoGroupByNameAsync(string name)
-    {
-        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("dojo_groups/",
-            new Dictionary<string, string>() { { "name", name } });
-
-        var response = await httpClient.GetAsync(url);
-        if (!response.IsSuccessStatusCode)
-            throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
-
-        return DefectDojoApiDeserializer<DojoGroup>.Deserialize(await response.Content.ReadAsStringAsync());
-    }
-
     public async Task<User?> GetDefectDojoUserByUsername(string applicationOwner)
     {
         var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat(
@@ -78,11 +63,11 @@ public class DefectDojoConnector
         };
 
         var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-        Console.WriteLine(await content.ReadAsStringAsync());
         var response = await httpClient.PostAsync("products/", content);
+        
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        var res = JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>();
+        
         return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
                throw new Exception($"New Product '{projectInfoName}' could not be retrieved");
     }
