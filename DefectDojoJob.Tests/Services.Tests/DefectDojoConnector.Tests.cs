@@ -15,7 +15,6 @@ namespace DefectDojoJob.Tests.Services.Tests;
 
 public class DefectDojoConnectorTests
 {
-
     [Theory]
     [AutoMoqData]
     public async Task WhenCreate_ArgumentsMappedCorrectlyToBody(IConfiguration configuration,string name,string description)
@@ -25,8 +24,13 @@ public class DefectDojoConnectorTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-
         var sut = new DefectDojoConnector(configuration,httpClient); 
+
+        //Act
+        await sut.CreateProductAsync(name,description,1,
+            Lifecycle.construction,2,3,4,5,true);
+
+        //Assert
         var expectedBody =  new
         {
             name,
@@ -39,12 +43,9 @@ public class DefectDojoConnectorTests
             external_audience = true,
             lifecycle = Lifecycle.construction
         };
-        await sut.CreateProductAsync(name,description,1,
-            Lifecycle.construction,2,3,4,5,true);
-        
+ 
         var actualBody = JsonConvert.DeserializeObject(fakeHttpHandler.requestBody??"");
         var expected = JObject.Parse(JsonConvert.SerializeObject(expectedBody));
         actualBody.Should().BeEquivalentTo(expected);
     }
- 
 }

@@ -1,12 +1,9 @@
-﻿using System.ComponentModel;
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Unicode;
 using DefectDojoJob.Helpers;
 using DefectDojoJob.Models.DefectDojo;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace DefectDojoJob.Services;
 
