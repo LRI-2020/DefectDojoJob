@@ -3,14 +3,14 @@ using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Services.Interfaces;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Services.Processors;
 
 public class ProductsProcessor : IProductsProcessor
 {
     private readonly IConfiguration configuration;
-    private readonly DefectDojoConnector defectDojoConnector;
+    private readonly IDefectDojoConnector defectDojoConnector;
 
-    public ProductsProcessor(IConfiguration configuration, DefectDojoConnector defectDojoConnector)
+    public ProductsProcessor(IConfiguration configuration, IDefectDojoConnector defectDojoConnector)
     {
         this.configuration = configuration;
         this.defectDojoConnector = defectDojoConnector;

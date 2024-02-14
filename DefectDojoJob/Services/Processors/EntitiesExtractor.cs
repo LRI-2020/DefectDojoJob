@@ -1,7 +1,7 @@
 ﻿using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Services.Interfaces;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Services.Processors;
 
 public class EntitiesExtractor : IEntitiesExtractor
 {

@@ -2,7 +2,7 @@
 using DefectDojoJob.Models.Processor.Results;
 using DefectDojoJob.Services.Interfaces;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Services.Processors;
 
 public class AssetProjectInfoProcessor
 {

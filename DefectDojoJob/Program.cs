@@ -3,6 +3,7 @@ using DefectDojoJob;
 using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Services;
 using DefectDojoJob.Services.Interfaces;
+using DefectDojoJob.Services.Processors;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureAppConfiguration((context, builder) =>
@@ -17,7 +18,7 @@ IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices(services =>
     {
         services.AddHostedService<Worker>();
-        services.AddHttpClient<DefectDojoConnector>();
+        services.AddHttpClient<IDefectDojoConnector,DefectDojoConnector>();
         services.AddTransient<InitialLoadService>();
         services.AddTransient<IEntitiesExtractor,EntitiesExtractor>();
         services.AddTransient<IProductsProcessor,ProductsProcessor>();

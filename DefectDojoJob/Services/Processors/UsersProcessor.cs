@@ -2,13 +2,13 @@
 using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Services.Interfaces;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Services.Processors;
 
 public class UsersProcessor : IUsersProcessor
 {
-    private readonly DefectDojoConnector defectDojoConnector;
+    private readonly IDefectDojoConnector defectDojoConnector;
 
-    public UsersProcessor(DefectDojoConnector defectDojoConnector)
+    public UsersProcessor(IDefectDojoConnector defectDojoConnector)
     {
         this.defectDojoConnector = defectDojoConnector;
     }

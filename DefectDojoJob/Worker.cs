@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Threading.Channels;
 using DefectDojoJob.Services;
+using DefectDojoJob.Services.Processors;
 using Newtonsoft.Json;
 
 namespace DefectDojoJob;

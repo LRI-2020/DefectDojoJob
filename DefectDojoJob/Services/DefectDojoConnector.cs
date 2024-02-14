@@ -2,12 +2,13 @@
 using System.Text;
 using DefectDojoJob.Helpers;
 using DefectDojoJob.Models.DefectDojo;
+using DefectDojoJob.Services.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace DefectDojoJob.Services;
 
-public class DefectDojoConnector
+public class DefectDojoConnector:IDefectDojoConnector
 {
     private readonly HttpClient httpClient;
 

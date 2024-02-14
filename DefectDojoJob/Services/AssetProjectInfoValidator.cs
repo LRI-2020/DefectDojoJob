@@ -7,7 +7,7 @@ public class AssetProjectInfoValidator : IAssetProjectInfoValidator
 {
     public void Validate(AssetProjectInfo projectInfo)
     {
-        var message = "Invalid project information - ";
+        const string message = "Invalid project information - ";
         if (projectInfo.Id < 0) throw new Exception(message+"Id has invalid value");
         if (string.IsNullOrEmpty(projectInfo.Name.Trim())) throw new Exception(message+"Name cannot be null or empty");
         if (string.IsNullOrEmpty(projectInfo.ShortDescription?.Trim())
