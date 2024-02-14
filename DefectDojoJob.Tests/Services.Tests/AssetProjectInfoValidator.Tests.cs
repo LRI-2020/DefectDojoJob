@@ -2,19 +2,11 @@
 using DefectDojoJob.Services;
 using DefectDojoJob.Tests.AutoDataAttribute;
 using FluentAssertions;
-using Xunit.Abstractions;
 
 namespace DefectDojoJob.Tests.Services.Tests;
 
 public class AssetProjectInfoValidatorTests
 {
-    private readonly ITestOutputHelper testOutputHelper;
-
-    public AssetProjectInfoValidatorTests(ITestOutputHelper testOutputHelper)
-    {
-        this.testOutputHelper = testOutputHelper;
-    }
-
     [Theory]
     [AutoMoqData]
     public void WhenProjectIdLowerThanZero_Exception(AssetProjectInfo pi)
@@ -38,8 +30,7 @@ public class AssetProjectInfoValidatorTests
         var act = () => sut.Validate(pi);
         act.Should().Throw<Exception>().Where(e => e.Message.ToLower().Contains("invalid") &&
                                                    e.Message.ToLower().Contains("name"));
-        ;
-    }
+        }
 
     [Theory]
     [AutoMoqData]
@@ -52,8 +43,7 @@ public class AssetProjectInfoValidatorTests
         var act = () => sut.Validate(pi);
         act.Should().Throw<Exception>().Where(e => e.Message.ToLower().Contains("invalid") &&
                                                    e.Message.ToLower().Contains("description"));
-        ;
-    }
+        }
 
     [Theory]
     [InlineAutoMoqData("short","detailed",0)]

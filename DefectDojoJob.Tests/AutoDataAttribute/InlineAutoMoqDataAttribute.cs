@@ -5,7 +5,7 @@ namespace DefectDojoJob.Tests.AutoDataAttribute;
 
 public class InlineAutoMoqDataAttribute : InlineAutoDataAttribute
 {
-    public InlineAutoMoqDataAttribute(params object[] objects) : base(new AutoMoqDataAttribute(), objects)
+    public InlineAutoMoqDataAttribute(params object?[] objects) : base(new AutoMoqDataAttribute(), objects)
     {
     }
 }
