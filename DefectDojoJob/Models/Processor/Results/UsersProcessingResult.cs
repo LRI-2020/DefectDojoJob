@@ -1,6 +1,7 @@
 ﻿using DefectDojoJob.Models;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
+using DefectDojoJob.Models.Processor.Results;
 
 namespace DefectDojoJob.Services;
 

@@ -1,9 +1,6 @@
-﻿using System.ComponentModel;
-using DefectDojoJob.Models;
-using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Models.Processor.Errors;
+﻿using DefectDojoJob.Models.Processor.Errors;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Models.Processor.Results;
 
 public interface IEntitiesProcessingResult
 {
