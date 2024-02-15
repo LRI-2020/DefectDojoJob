@@ -43,21 +43,19 @@ public class DefectDojoConnector:IDefectDojoConnector
         return DefectDojoApiDeserializer<ProductType>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
 
-    public async Task<Product> CreateProductAsync(string projectInfoName, string description, int productType, Lifecycle? lifecycle,
-        int? applicationOwnerId, int? applicationOwnerBackUpId, int? functionalOwnerId,
-        int? numberOfUsers, bool openToPartner = false)
+    public async Task<Product> CreateProductAsync(Product product)
     {
         var body = new
         {
-            name = projectInfoName,
-            description,
-            prod_type = productType,
-            team_manager = applicationOwnerBackUpId,
-            technical_contact = applicationOwnerId,
-            product_manager = functionalOwnerId,
-            user_records = numberOfUsers,
-            external_audience = openToPartner,
-            lifecycle = lifecycle != null ? lifecycle.ToString() : null
+            name = product.Name,
+            description=product.Description,
+            prod_type = product.ProductTypeId,
+            team_manager = product.TeamManager,
+            technical_contact = product.TechnicalContact,
+            product_manager = product.ProductManager,
+            user_records = product.UserRecords,
+            external_audience = product.ExternalAudience,
+            lifecycle = product.Lifecycle != null ? product.Lifecycle.ToString() : null
         };
 
         var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
@@ -67,6 +65,6 @@ public class DefectDojoConnector:IDefectDojoConnector
             throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
         
         return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
-               throw new Exception($"New Product '{projectInfoName}' could not be retrieved");
+               throw new Exception($"New Product '{product.Name}' could not be retrieved");
     }
 }

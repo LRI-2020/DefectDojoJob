@@ -9,6 +9,7 @@ public class ProductsProcessor : IProductsProcessor
 {
     private readonly IConfiguration configuration;
     private readonly IDefectDojoConnector defectDojoConnector;
+    private const string DefaultDescription = "Enter a description";
 
     public ProductsProcessor(IConfiguration configuration, IDefectDojoConnector defectDojoConnector)
     {
@@ -41,9 +42,9 @@ public class ProductsProcessor : IProductsProcessor
     public async Task<AssetToDefectDojoMapper> ProcessProduct(AssetProjectInfo projectInfo,
         List<AssetToDefectDojoMapper> users)
     {
-        var description = string.IsNullOrEmpty(projectInfo.ShortDescription) && string.IsNullOrEmpty(projectInfo.DetailedDescription)
-            ? "Enter a description"
-            : $"Short Description : {projectInfo.ShortDescription}; Detailed Description : {projectInfo.DetailedDescription} ; ";
+        var description = string.IsNullOrEmpty(projectInfo.ShortDescription?.Trim()) && string.IsNullOrEmpty(projectInfo.DetailedDescription?.Trim())
+            ? DefaultDescription
+            : $"Short Description : {projectInfo.ShortDescription??"/"}; Detailed Description : {projectInfo.DetailedDescription??"/"} ; ";
         var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Name);
         var lifecycle = MatchLifeCycle(projectInfo.State);
 
@@ -57,12 +58,21 @@ public class ProductsProcessor : IProductsProcessor
             .Find(u => u.AssetIdentifier == projectInfo.FunctionalOwner)?
             .DefectDojoId;
 
-        var product = await defectDojoConnector.CreateProductAsync(projectInfo.Name, description,
-            productType, lifecycle, appOwnerId,
-            appOwnerBuId, funcOwnerId,
-            projectInfo.NumberOfUsers, projectInfo.OpenToPartner ?? false);
+        var product = new Product(projectInfo.Name, description)
+        {
+            ProductTypeId = productType,
+            Lifecycle = lifecycle,
+            TechnicalContact = appOwnerId,
+            TeamManager = appOwnerBuId,
+            ProductManager = funcOwnerId,
+            UserRecords = projectInfo.NumberOfUsers,
+            ExternalAudience = projectInfo.OpenToPartner ?? false
 
-        return new AssetToDefectDojoMapper(projectInfo.Name, product.Id);
+        };
+
+        var res = await defectDojoConnector.CreateProductAsync(product);
+
+        return new AssetToDefectDojoMapper(projectInfo.Name, res.Id);
     }
 
     private async Task<int> GetProductTypeAsync(string? providedProductType, string assetIdentifier)

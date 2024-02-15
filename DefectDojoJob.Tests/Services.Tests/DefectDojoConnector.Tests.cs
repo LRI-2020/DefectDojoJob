@@ -24,11 +24,20 @@ public class DefectDojoConnectorTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoConnector(configuration,httpClient); 
+        var sut = new DefectDojoConnector(configuration,httpClient);
 
+        var productToCreate = new Product(name, description)
+        {
+            ProductTypeId = 1,
+            Lifecycle = Lifecycle.construction,
+            TechnicalContact = 2,
+            TeamManager = 3,
+            ProductManager = 4,
+            UserRecords = 5,
+            ExternalAudience = true
+        };
         //Act
-        await sut.CreateProductAsync(name,description,1,
-            Lifecycle.construction,2,3,4,5,true);
+        await sut.CreateProductAsync(productToCreate);
 
         //Assert
         var expectedBody =  new
