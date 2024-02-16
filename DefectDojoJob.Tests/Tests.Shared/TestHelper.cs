@@ -1,5 +1,9 @@
 ﻿using System.Net;
+using DefectDojoJob.Models.DefectDojo;
+using DefectDojoJob.Services;
+using DefectDojoJob.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Moq;
 
 namespace DefectDojoJob.Tests.Helpers.Tests;
 
@@ -24,9 +28,9 @@ public static class TestHelper
             .Build();
     }
 
-    public static FakeHttpMessageHandler GetFakeHandler(HttpStatusCode statusCode, string? responseJson=null )
+    public static FakeHttpMessageHandler GetFakeHandler(HttpStatusCode statusCode, string? responseJson = null)
     {
-       return new FakeHttpMessageHandler(statusCode, responseJson);
+        return new FakeHttpMessageHandler(statusCode, responseJson);
     }
 
     public static string GetFileContent(string jsonPath)
@@ -34,7 +38,6 @@ public static class TestHelper
         using StreamReader reader = new(jsonPath);
         return reader.ReadToEnd();
     }
-    
-    
+
 
 }

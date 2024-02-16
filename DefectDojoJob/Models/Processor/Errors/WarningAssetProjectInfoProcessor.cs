@@ -11,4 +11,8 @@ public class WarningAssetProjectInfoProcessor : Exception
         EntityType = entityType;
         AssetIdentifier = assetIdentifier;
     }
+
+    public WarningAssetProjectInfoProcessor()
+    {
+    }
 }
