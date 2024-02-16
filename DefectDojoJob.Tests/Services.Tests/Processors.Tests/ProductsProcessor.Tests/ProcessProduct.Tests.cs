@@ -4,23 +4,23 @@ using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Services;
 using DefectDojoJob.Services.Interfaces;
-using DefectDojoJob.Services.Processors;
 using DefectDojoJob.Tests.AutoDataAttribute;
+using DefectDojoJob.Tests.Helpers.Tests;
 using FluentAssertions;
 using Moq;
 
-namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests;
+namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests.ProductsProcessor.Tests;
 
-public class ProductsProcessorTest
+public class ProcessProductTests
 {
     [Theory]
     [InlineAutoMoqData]
-    public async Task WhenCreateWithMandatoryPropertiesOnly_NullSentForOptionalValues([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenCreateWithMandatoryPropertiesOnly_NullSentForOptionalValues([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         ProductType productType, Product res)
     {
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
-
+        
         var pi = (new Fixture()).Build<AssetProjectInfo>()
             .Without(pi => pi.ApplicationOwner)
             .Without(pi=> pi.FunctionalOwner)
@@ -45,10 +45,10 @@ public class ProductsProcessorTest
 
     [Theory]
     [InlineAutoMoqData]
-    public async Task WhenCreate_DirectValuesCorrectlyMapped([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenCreate_DirectValuesCorrectlyMapped([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, ProductType productType, Product res)
     {
-        defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
+         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
 
         var users = new List<AssetToDefectDojoMapper>();
@@ -64,7 +64,7 @@ public class ProductsProcessorTest
 
     [Theory]
     [InlineAutoMoqData]
-    public async Task WhenUserExist_ValueIsRetrieved([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenUserExist_ValueIsRetrieved([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, string username, int userId, ProductType productType, Product res)
 
     {
@@ -87,7 +87,7 @@ public class ProductsProcessorTest
 
     [Theory]
     [InlineAutoMoqData]
-    public async Task WhenUserNotFound_NullIsSent([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenUserNotFound_NullIsSent([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, ProductType productType, Product res)
 
     {
@@ -105,7 +105,7 @@ public class ProductsProcessorTest
     [InlineAutoMoqData(null)]
     [InlineAutoMoqData("")]
     [InlineAutoMoqData(" ")]
-    public async Task WhenDescriptionNull_DefaultValueSent(string? desc, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenDescriptionNull_DefaultValueSent(string? desc, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, ProductType productType, Product res)
 
     {
@@ -126,7 +126,7 @@ public class ProductsProcessorTest
     [InlineAutoMoqData("abcdef", null)]
     [InlineAutoMoqData("abcdef", "")]
     [InlineAutoMoqData("abcdef", "  ")]
-    public async Task WhenDescriptionNotNull_ConcatValueSent(string? shortDesc, string? detailedDesc, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenDescriptionNotNull_ConcatValueSent(string? shortDesc, string? detailedDesc, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, ProductType productType, Product res)
 
     {
@@ -143,7 +143,7 @@ public class ProductsProcessorTest
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenNoProductTypeFound_Error([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenNoProductTypeFound_Error([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, List<AssetToDefectDojoMapper> users)
 
     {
@@ -159,7 +159,7 @@ public class ProductsProcessorTest
     [InlineAutoMoqData("EnService", Lifecycle.production)]
     [InlineAutoMoqData("EnCoursDeDeclassement", Lifecycle.production)]
     [InlineAutoMoqData("Declassee", Lifecycle.retirement)]
-    public async Task WhenStateIsValidLifeCycle_CorrectMatchingValueSent(string? state, Lifecycle expectedLifecycle, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenStateIsValidLifeCycle_CorrectMatchingValueSent(string? state, Lifecycle expectedLifecycle, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, Product res, ProductType type)
 
     {
@@ -177,7 +177,7 @@ public class ProductsProcessorTest
     [InlineAutoMoqData("unknown")]
     [InlineAutoMoqData(null)]
     [InlineAutoMoqData("   ")]
-    public async Task WhenStateIsInvalidLifeCycle_NullSent(string? state, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, ProductsProcessor sut,
+    public async Task WhenStateIsInvalidLifeCycle_NullSent(string? state, [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
         AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, Product res, ProductType type)
 
     {
