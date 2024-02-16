@@ -81,7 +81,7 @@ public class ProductsProcessor : IProductsProcessor
 
         if (string.IsNullOrEmpty(providedProductType) && string.IsNullOrEmpty(defaultType))
             throw new ErrorAssetProjectInfoProcessor(
-                "no productType provided and none found in the configuration file", assetIdentifier, EntityType.Product);
+                "no product type provided and none found in the configuration file", assetIdentifier, EntityType.Product);
 
         ProductType? res;
         if (!string.IsNullOrEmpty(providedProductType)) res = await defectDojoConnector.GetProductTypeByNameAsync(providedProductType);
