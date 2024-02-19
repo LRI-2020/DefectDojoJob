@@ -4,8 +4,8 @@ public enum AssetProjectInfoProcessingAction
 
 {
     None,
-    Created,
-    Updated
+    Create,
+    Update
     
     
 }

@@ -36,7 +36,7 @@ public class UsersProcessor : IUsersProcessor
 
     public async Task<AssetToDefectDojoMapper> ProcessUserAsync(string username)
     {
-        var user = await defectDojoConnector.GetDefectDojoUserByUsername(username);
+        var user = await defectDojoConnector.GetDefectDojoUserByUsernameAsync(username);
         if (user != null)
         {
             return new AssetToDefectDojoMapper(username, user.Id);

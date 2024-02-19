@@ -30,7 +30,7 @@ public class ProcessProductTests
             .Without(pi=> pi.NumberOfUsers)
             .Create();
         var users = new List<AssetToDefectDojoMapper>();
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p =>
@@ -52,7 +52,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
 
         var users = new List<AssetToDefectDojoMapper>();
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p =>
@@ -79,7 +79,7 @@ public class ProcessProductTests
         var users = new List<AssetToDefectDojoMapper>() { new(username, userId) };
 
         //Act
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.ProductManager == userId && p.TeamManager == userId && p.TechnicalContact == userId)));
@@ -95,7 +95,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
 
         var users = new List<AssetToDefectDojoMapper>();
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.ProductManager == null && p.TeamManager == null && p.TechnicalContact == null)));
@@ -113,7 +113,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
 
         pi.ShortDescription = pi.DetailedDescription = desc;
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.Description == "Enter a description")));
@@ -135,7 +135,7 @@ public class ProcessProductTests
 
         pi.ShortDescription = shortDesc;
         pi.DetailedDescription = detailedDesc;
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.Description.Contains(shortDesc ?? "") && p.Description.Contains(detailedDesc ?? ""))));
@@ -150,7 +150,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>()))
             .ReturnsAsync((ProductType?)null);
 
-        Func<Task> act = () => sut.ProcessProduct(pi, users);
+        Func<Task> act = () => sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
         await act.Should().ThrowAsync<Exception>().Where(e => e.Message.ToLower().Contains("no product type"));
     }
 
@@ -168,7 +168,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
 
         pi.State = state;
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(It.Is<Product>(p => p.Lifecycle == expectedLifecycle)));
     }
@@ -186,7 +186,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(res);
 
         pi.State = state;
-        await sut.ProcessProduct(pi, users);
+        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(It.Is<Product>(p => p.Lifecycle == null)));
     }

@@ -12,6 +12,7 @@ public class WarningAssetProjectInfoProcessor : Exception
         AssetIdentifier = assetIdentifier;
     }
 
+    //Needed for testing
     public WarningAssetProjectInfoProcessor()
     {
     }
