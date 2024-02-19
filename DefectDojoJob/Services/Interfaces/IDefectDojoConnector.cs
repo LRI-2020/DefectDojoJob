@@ -10,7 +10,6 @@ public interface IDefectDojoConnector
     public Task<Product> CreateProductAsync(Product product);
 
     public Task<Metadata?> GetMetadataAsync(Dictionary<string, string> searchParams);
-    public Task<Product?> GetProductByIdAsync(int productId);
     public Task<Product?> GetProductByNameAsync(string name);
 
 

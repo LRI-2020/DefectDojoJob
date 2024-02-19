@@ -61,4 +61,65 @@ public class ProcessProductsTests
         res.Entities.Count.Should().Be(projects.Count - 1);
         res.Warnings.Count.Should().Be(1);
     }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenCodeFoundButNotProject_ErrorAddedToResult(Metadata metadataRes,
+        [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
+        DefectDojoJob.Services.Processors.ProductsProcessor sut,
+        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+    {
+        var projects = new List<AssetProjectInfo> { pi };
+        defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string,string>>())).ReturnsAsync(metadataRes);
+        defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync((Product?)null);
+
+        var res = await sut.ProcessProductsAsync(projects, users);
+
+        res.Entities.Count.Should().Be(0);
+        res.Errors.Count.Should().Be(1);
+        res.Errors[0].Message.Should().Contain("Mismatch Code and Name");
+    }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenNameFoundButNotCode_ErrorAddedToResult(Product productRes,
+        [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
+        DefectDojoJob.Services.Processors.ProductsProcessor sut,
+        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+    {
+        var projects = new List<AssetProjectInfo> { pi };
+        defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string,string>>())).ReturnsAsync((Metadata?)null);
+        defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync(productRes);
+
+        var res = await sut.ProcessProductsAsync(projects, users);
+
+        res.Entities.Count.Should().Be(0);
+        res.Errors.Count.Should().Be(1);
+        res.Errors[0].Message.Should().Contain("Mismatch Code and Name");
+    }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenMetadataAndProductIdDifferent_ErrorAddedToResult(Product productRes,Metadata metadataRes,
+        [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
+        DefectDojoJob.Services.Processors.ProductsProcessor sut,
+        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+    {
+        metadataRes.Product = 1;
+        productRes.Id = 2;
+        var projects = new List<AssetProjectInfo> { pi };
+        defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string,string>>())).ReturnsAsync(metadataRes);
+        defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync(productRes);
+
+        var res = await sut.ProcessProductsAsync(projects, users);
+
+        res.Entities.Count.Should().Be(0);
+        res.Errors.Count.Should().Be(1);
+        res.Errors[0].Message.Should().Contain("Mismatch Code and Name");
+        res.Errors[0].Message.Should().Contain("not linked together");
+    }
+    
+    
+    //If project exist - update is called
+    //If project doe snot exist - create is called
 }

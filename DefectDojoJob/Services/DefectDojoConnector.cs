@@ -80,7 +80,7 @@ public class DefectDojoConnector:IDefectDojoConnector
         return DefectDojoApiDeserializer<Metadata>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
     
-    public async Task<Product?> GetProductByIdAsync(int productId)
+    private async Task<Product?> GetProductByIdAsync(int productId)
     {
         var url = $"products/{productId}";
         var response = await httpClient.GetAsync(url);

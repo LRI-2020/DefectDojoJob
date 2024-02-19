@@ -62,14 +62,15 @@ public class ProductsProcessor : IProductsProcessor
 
     private static void ValidateResults(Metadata? metadata, Product? product, string code, string name)
     {
+        const string errorMessage = "Mismatch Code and Name -";
         if (metadata == null && product != null)
-            throw new ErrorAssetProjectInfoProcessor($" Product '{name}' has been found but no code '{code}' linked to it",
+            throw new ErrorAssetProjectInfoProcessor($"{errorMessage} Product '{name}' has been found but no code '{code}' linked to it",
                 code, EntityType.Product);
         if (metadata != null && product == null)
-            throw new ErrorAssetProjectInfoProcessor($" Code '{code}' has been found but no product '{name}' linked to it",
+            throw new ErrorAssetProjectInfoProcessor($"{errorMessage} Code '{code}' has been found but no product '{name}' linked to it",
                 code, EntityType.Product);
         if (metadata?.Product != product?.Id)
-            throw new ErrorAssetProjectInfoProcessor($" Code {code} and product '{name}' have been found but are not linked together in defect dojo",
+            throw new ErrorAssetProjectInfoProcessor($"{errorMessage} Code {code} and product '{name}' have been found but are not linked together in defect dojo",
                 code, EntityType.Product);
     }
 
