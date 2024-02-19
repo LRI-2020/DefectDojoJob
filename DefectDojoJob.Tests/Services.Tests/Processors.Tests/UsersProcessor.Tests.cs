@@ -19,7 +19,7 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username))
             .ReturnsAsync(new User() { Id = 1, UserName = username });
 
         var res = await sut.ProcessUserAsync(username);
@@ -35,7 +35,7 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username))
             .ReturnsAsync((User?)null);
 
         Func<Task> act = () => sut.ProcessUserAsync(username);
@@ -51,7 +51,7 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username))
             .ReturnsAsync(new User() { Id = 1, UserName = username });
 
         var usernames = new List<string>() { username };
@@ -70,7 +70,7 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username))
             .ReturnsAsync((User?)null);
         var usernames = new List<string>() { username };
 
@@ -88,7 +88,7 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(It.IsAny<string>()))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(It.IsAny<string>()))
             .Throws<Exception>();
         var usernames = new List<string>() { username };
 
@@ -106,7 +106,7 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(It.IsAny<string>()))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(It.IsAny<string>()))
             .ReturnsAsync(new User() { Id = 1, UserName = "username" });
 
         var itemsNumber = new Random().Next(3, 15);
@@ -124,11 +124,11 @@ public class UsersProcessorTests
         UsersProcessor sut)
     {
         //Arrange
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username3))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username3))
             .ReturnsAsync(new User() { Id = 1, UserName = username1 });
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username2))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username2))
             .ReturnsAsync((User?)null);
-        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsername(username1))
+        defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username1))
             .Throws<Exception>();
 
         var usernames = new List<string>() { username1, username2, username3 };

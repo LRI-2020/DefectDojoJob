@@ -20,7 +20,7 @@ public class DefectDojoConnector:IDefectDojoConnector
         var url = configuration["DefectDojoBaseUrl"];
         if (url != null) this.httpClient.BaseAddress = new Uri(url);
     }
-    public async Task<User?> GetDefectDojoUserByUsername(string applicationOwner)
+    public async Task<User?> GetDefectDojoUserByUsernameAsync(string applicationOwner)
     {
         var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat(
             "users/",
@@ -66,5 +66,40 @@ public class DefectDojoConnector:IDefectDojoConnector
         
         return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
                throw new Exception($"New Product '{product.Name}' could not be retrieved");
+    }
+
+    public async Task<Metadata?> GetMetadataAsync(Dictionary<string,string> searchParams)
+    {
+        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat(
+            "metadata/",
+            searchParams);
+        var response = await httpClient.GetAsync(url);
+        if ((int)response.StatusCode == 404) return null;
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
+        return DefectDojoApiDeserializer<Metadata>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
+    }
+    
+    public async Task<Product?> GetProductByIdAsync(int productId)
+    {
+        var url = $"products/{productId}";
+        var response = await httpClient.GetAsync(url);
+        if ((int)response.StatusCode == 404) return null;
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
+        return DefectDojoApiDeserializer<Product>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
+    }
+    
+    public async Task<Product?> GetProductByNameAsync(string name)
+    {
+        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("products/", 
+            new Dictionary<string, string>(){
+                { "name", name }
+            });
+        var response = await httpClient.GetAsync(url);
+        if ((int)response.StatusCode == 404) return null;
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
+        return DefectDojoApiDeserializer<Product>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
 }

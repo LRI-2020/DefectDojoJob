@@ -53,7 +53,8 @@ public class ProcessProductsTests
         var projects = new Fixture().CreateMany<AssetProjectInfo>(5).ToList();
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(productRes);
-        defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.Is<Product>(p => p.Name == projects[2].Name))).Throws<WarningAssetProjectInfoProcessor>();
+        defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.Is<Product>(p => p.Name == projects[2].Name)))
+            .Throws<WarningAssetProjectInfoProcessor>();
 
         var res = await sut.ProcessProductsAsync(projects, users);
 
