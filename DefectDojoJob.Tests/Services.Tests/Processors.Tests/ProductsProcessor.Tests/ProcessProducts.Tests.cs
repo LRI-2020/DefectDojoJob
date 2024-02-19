@@ -121,5 +121,5 @@ public class ProcessProductsTests
     
     
     //If project exist - update is called
-    //If project doe snot exist - create is called
+    //If project does not exist - create is called
 }

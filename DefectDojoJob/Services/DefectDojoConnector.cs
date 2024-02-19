@@ -2,13 +2,15 @@
 using System.Text;
 using DefectDojoJob.Helpers;
 using DefectDojoJob.Models.DefectDojo;
+using DefectDojoJob.Models.Processor;
+using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Services.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace DefectDojoJob.Services;
 
-public class DefectDojoConnector:IDefectDojoConnector
+public class DefectDojoConnector : IDefectDojoConnector
 {
     private readonly HttpClient httpClient;
 
@@ -20,6 +22,7 @@ public class DefectDojoConnector:IDefectDojoConnector
         var url = configuration["DefectDojoBaseUrl"];
         if (url != null) this.httpClient.BaseAddress = new Uri(url);
     }
+
     public async Task<User?> GetDefectDojoUserByUsernameAsync(string applicationOwner)
     {
         var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat(
@@ -45,30 +48,35 @@ public class DefectDojoConnector:IDefectDojoConnector
 
     public async Task<Product> CreateProductAsync(Product product)
     {
+        var content = GenerateRequestContent(product, Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync("products/", content);
+
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
+
+        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
+               throw new Exception($"New Product '{product.Name}' could not be retrieved");
+    }
+
+    private StringContent GenerateRequestContent(Product product, Encoding encoding, string mediaType)
+    {
         var body = new
         {
             name = product.Name,
-            description=product.Description,
+            description = product.Description,
             prod_type = product.ProductTypeId,
             team_manager = product.TeamManager,
             technical_contact = product.TechnicalContact,
             product_manager = product.ProductManager,
             user_records = product.UserRecords,
             external_audience = product.ExternalAudience,
-            lifecycle = product.Lifecycle != null ? product.Lifecycle.ToString() : null
+            lifecycle = product.Lifecycle?.ToString()
         };
 
-        var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
-        var response = await httpClient.PostAsync("products/", content);
-        
-        if (!response.IsSuccessStatusCode)
-            throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-        
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
-               throw new Exception($"New Product '{product.Name}' could not be retrieved");
+        return new StringContent(JsonConvert.SerializeObject(body), encoding, mediaType);
     }
 
-    public async Task<Metadata?> GetMetadataAsync(Dictionary<string,string> searchParams)
+    public async Task<Metadata?> GetMetadataAsync(Dictionary<string, string> searchParams)
     {
         var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat(
             "metadata/",
@@ -79,7 +87,7 @@ public class DefectDojoConnector:IDefectDojoConnector
             throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
         return DefectDojoApiDeserializer<Metadata>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
-    
+
     private async Task<Product?> GetProductByIdAsync(int productId)
     {
         var url = $"products/{productId}";
@@ -89,11 +97,12 @@ public class DefectDojoConnector:IDefectDojoConnector
             throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
         return DefectDojoApiDeserializer<Product>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
     }
-    
+
     public async Task<Product?> GetProductByNameAsync(string name)
     {
-        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("products/", 
-            new Dictionary<string, string>(){
+        var url = QueryStringHelper.BuildUrlWithQueryStringUsingStringConcat("products/",
+            new Dictionary<string, string>()
+            {
                 { "name", name }
             });
         var response = await httpClient.GetAsync(url);
@@ -101,5 +110,19 @@ public class DefectDojoConnector:IDefectDojoConnector
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while processing the request, status code : {(int)response.StatusCode} - {response.StatusCode}");
         return DefectDojoApiDeserializer<Product>.DeserializeFirstItemOfResults(await response.Content.ReadAsStringAsync());
+    }
+
+    public async Task<Product> UpdateProductAsync(Product product)
+    {
+        var content = GenerateRequestContent(product, Encoding.UTF8, "application/json");
+        var response = await httpClient.PutAsync($"products/{product.Id}", content);
+        if ((int)response.StatusCode == 404)
+            throw new ErrorAssetProjectInfoProcessor(
+                $"No product with Id {product.Id} found, update could not be processed", product.Name, EntityType.Product);
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while updating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
+
+        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
+               throw new Exception($"Updated Product '{product.Name}' could not be retrieved");
     }
 }

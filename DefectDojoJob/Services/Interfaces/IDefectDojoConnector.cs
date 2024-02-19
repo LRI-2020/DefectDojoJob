@@ -13,4 +13,5 @@ public interface IDefectDojoConnector
     public Task<Product?> GetProductByNameAsync(string name);
 
 
+    Task<Product> UpdateProductAsync(Product product);
 }

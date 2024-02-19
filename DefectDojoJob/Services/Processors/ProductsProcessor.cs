@@ -26,9 +26,18 @@ public class ProductsProcessor : IProductsProcessor
         {
             try
             {
-                var action = await ExistingProjectAsync(project) ? AssetProjectInfoProcessingAction.Update : AssetProjectInfoProcessingAction.Create;
-                result.Entities.Add(await ProcessProductAsync(project, users, action));
+                var productId = await ExistingProjectAsync(project);
+                switch (productId)
+                {
+                    case null:
+                        result.Entities.Add(await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Create));
+                        break;
+                    case not null:
+                        result.Entities.Add(await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Update, productId));
+                        break;
+                }
             }
+            
             catch (Exception e)
             {
                 if (e is WarningAssetProjectInfoProcessor warning) result.Warnings.Add(warning);
@@ -42,7 +51,7 @@ public class ProductsProcessor : IProductsProcessor
         return result;
     }
 
-    private async Task<bool> ExistingProjectAsync(AssetProjectInfo project)
+    private async Task<int?> ExistingProjectAsync(AssetProjectInfo project)
     {
         var searchParams = new Dictionary<string, string>
         {
@@ -56,8 +65,8 @@ public class ProductsProcessor : IProductsProcessor
         var metadata = await metadataTask;
         var product = await productTask;
         ValidateResults(metadata, product, project.Code, project.Name);
-
-        return metadata != null && product != null;
+        if (metadata != null && product != null) return product.Id;
+        return null;
     }
 
     private static void ValidateResults(Metadata? metadata, Product? product, string code, string name)
@@ -75,8 +84,9 @@ public class ProductsProcessor : IProductsProcessor
     }
 
     public async Task<AssetToDefectDojoMapper> ProcessProductAsync(AssetProjectInfo projectInfo,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfoProcessingAction requiredAction)
+        List<AssetToDefectDojoMapper> users, AssetProjectInfoProcessingAction requiredAction, int? productId = null)
     {
+
         var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Code);
 
         var product = new Product(projectInfo.Name, SetDescription(projectInfo))
@@ -90,10 +100,26 @@ public class ProductsProcessor : IProductsProcessor
             ExternalAudience = projectInfo.OpenToPartner ?? false
         };
 
-        var res = await defectDojoConnector.CreateProductAsync(product);
+        Product? res;
+        switch (requiredAction)
+        {
+            case AssetProjectInfoProcessingAction.Create :
+                res = await defectDojoConnector.CreateProductAsync(product);
+                break;
+            case AssetProjectInfoProcessingAction.Update:
+                product.Id = productId ?? throw new ErrorAssetProjectInfoProcessor(
+                    "Update product requested but no productId provided",product.Name,EntityType.Product);
+                res = await defectDojoConnector.UpdateProductAsync(product);
+                break;
+            case AssetProjectInfoProcessingAction.None:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(requiredAction), requiredAction, null);
+        }
 
         return new AssetToDefectDojoMapper(projectInfo.Code, res.Id);
     }
+    
+    
 
     private static string SetDescription(AssetProjectInfo projectInfo)
     {
