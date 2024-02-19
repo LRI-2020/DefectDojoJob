@@ -1,5 +1,4 @@
-﻿using DefectDojoJob.Services;
-
+﻿
 namespace DefectDojoJob.Models.Processor.Errors;
 
 public class WarningAssetProjectInfoProcessor : Exception
