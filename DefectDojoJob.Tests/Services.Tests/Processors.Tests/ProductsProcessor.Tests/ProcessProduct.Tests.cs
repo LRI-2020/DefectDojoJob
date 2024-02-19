@@ -2,6 +2,7 @@
 using AutoFixture.Xunit2;
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
+using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Services;
 using DefectDojoJob.Services.Interfaces;
 using DefectDojoJob.Tests.AutoDataAttribute;
@@ -189,6 +190,37 @@ public class ProcessProductTests
         await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(It.Is<Product>(p => p.Lifecycle == null)));
+    }
+    
+        
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenUpdateCallWithoutProductId_Error(ProductType productType,
+        [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
+        DefectDojoJob.Services.Processors.ProductsProcessor sut,
+        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+    {
+        
+       defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
+
+        Func<Task> act = ()=> sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Update);
+        await act.Should().ThrowAsync<ErrorAssetProjectInfoProcessor>()
+            .Where(e => e.Message.Contains("no productId"));
+    }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenUpdateCallWithInvalidAction_Error(ProductType productType,
+        [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
+        DefectDojoJob.Services.Processors.ProductsProcessor sut,
+        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+    {
+        
+        defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
+
+        Func<Task> act = ()=> sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.None);
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
+            .Where(e => e.Message.Contains("Invalid action"));
     }
   
 }

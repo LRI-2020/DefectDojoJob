@@ -86,7 +86,6 @@ public class ProductsProcessor : IProductsProcessor
     public async Task<AssetToDefectDojoMapper> ProcessProductAsync(AssetProjectInfo projectInfo,
         List<AssetToDefectDojoMapper> users, AssetProjectInfoProcessingAction requiredAction, int? productId = null)
     {
-
         var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Code);
 
         var product = new Product(projectInfo.Name, SetDescription(projectInfo))
@@ -100,26 +99,20 @@ public class ProductsProcessor : IProductsProcessor
             ExternalAudience = projectInfo.OpenToPartner ?? false
         };
 
-        Product? res;
         switch (requiredAction)
         {
             case AssetProjectInfoProcessingAction.Create :
-                res = await defectDojoConnector.CreateProductAsync(product);
-                break;
+                var createRes = await defectDojoConnector.CreateProductAsync(product);
+                return new AssetToDefectDojoMapper(projectInfo.Code, (createRes.Id));
             case AssetProjectInfoProcessingAction.Update:
-                product.Id = productId ?? throw new ErrorAssetProjectInfoProcessor(
-                    "Update product requested but no productId provided",product.Name,EntityType.Product);
-                res = await defectDojoConnector.UpdateProductAsync(product);
-                break;
+                product.Id = productId ?? throw new ErrorAssetProjectInfoProcessor("Update product requested but no productId found or provided",product.Name,EntityType.Product);
+                var updateRes = await defectDojoConnector.UpdateProductAsync(product);
+                return new AssetToDefectDojoMapper(projectInfo.Code, updateRes.Id);
             case AssetProjectInfoProcessingAction.None:
             default:
-                throw new ArgumentOutOfRangeException(nameof(requiredAction), requiredAction, null);
+                throw new ArgumentOutOfRangeException(nameof(requiredAction), requiredAction, "Invalid action required on the product");
         }
-
-        return new AssetToDefectDojoMapper(projectInfo.Code, res.Id);
     }
-    
-    
 
     private static string SetDescription(AssetProjectInfo projectInfo)
     {
