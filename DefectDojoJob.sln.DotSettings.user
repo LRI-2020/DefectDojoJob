@@ -1,4 +1,7 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=1602c0d5_002De32e_002D43cd_002D8b22_002Dfdb28e071afb/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;Solution /&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=671b9a87_002D18dc_002D411c_002Da212_002D7554d8777113/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="WhenUserExist_ValueIsRetrieved #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
   &lt;TestAncestor&gt;&#xD;
     &lt;TestId&gt;xUnit::4882F16C-306A-4D3A-8A2C-6E70213EC941::net6.0::DefectDojoJob.Tests.Services.Tests.Processors.Tests.ProductsProcessorTest.WhenUserExist_ValueIsRetrieved&lt;/TestId&gt;&#xD;
@@ -9,6 +12,4 @@
     &lt;TestId&gt;xUnit::4882F16C-306A-4D3A-8A2C-6E70213EC941::net6.0::DefectDojoJob.Tests.Services.Tests.Processors.Tests.ProductsProcessorTest.WhenUserExist_ValueIsRetrieved&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=bcab076e_002D2bef_002D41ca_002Da97b_002D31125453e53b/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
-  &lt;Solution /&gt;&#xD;
-&lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
+	</wpf:ResourceDictionary>

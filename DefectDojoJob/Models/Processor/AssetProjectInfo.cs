@@ -4,8 +4,7 @@ namespace DefectDojoJob.Models.Processor;
 
 public class AssetProjectInfo
 {
-    [JsonProperty(Required = Required.Always)]
-    public int Id { get; set; }
+    public int? Id { get; set; }
 
     [JsonProperty(Required = Required.Always)]
     public string Name { get; set; }    
@@ -20,7 +19,9 @@ public class AssetProjectInfo
 
     public string? ShortDescription { get; set; }
     public string? DetailedDescription { get; set; }
-    public string? Code { get; set; }
+    [JsonProperty(Required = Required.Always)]
+
+    public string Code { get; set; }
     public string? State { get; set; }
     public string? Team { get; set; }
     public string? ApplicationOwner { get; set; }

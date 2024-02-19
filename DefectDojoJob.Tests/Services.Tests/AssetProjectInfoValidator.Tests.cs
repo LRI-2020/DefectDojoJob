@@ -31,6 +31,19 @@ public class AssetProjectInfoValidatorTests
         act.Should().Throw<Exception>().Where(e => e.Message.ToLower().Contains("invalid") &&
                                                    e.Message.ToLower().Contains("name"));
         }
+    
+    [Theory]
+    [InlineAutoMoqData("  ")]
+    [InlineAutoMoqData("")]
+    public void WhenCodeIsEmpty_Exception(string code, AssetProjectInfo pi)
+    {
+        pi.Code = code;
+        var sut = new AssetProjectInfoValidator();
+
+        var act = () => sut.Validate(pi);
+        act.Should().Throw<Exception>().Where(e => e.Message.ToLower().Contains("invalid") &&
+                                                   e.Message.ToLower().Contains("code"));
+    }
 
     [Theory]
     [AutoMoqData]
@@ -47,11 +60,12 @@ public class AssetProjectInfoValidatorTests
 
     [Theory]
     [InlineAutoMoqData("short","detailed",0)]
-    [InlineAutoMoqData("short",null,1)]
+    [InlineAutoMoqData("short",null,null)]
     [InlineAutoMoqData(null,"detailed",1)]
-    public void WhenValid_NoException(string? shortDesc, string? detailedDesc, int id, AssetProjectInfo pi)
+    public void WhenValid_NoException(string? shortDesc, string? detailedDesc, int? id, AssetProjectInfo pi)
     {
-        pi.Name = "test";
+        pi.Name = "name_test";
+        pi.Code = "code_test";
         pi.Id = id;
         pi.DetailedDescription = detailedDesc;
         pi.ShortDescription = shortDesc;
