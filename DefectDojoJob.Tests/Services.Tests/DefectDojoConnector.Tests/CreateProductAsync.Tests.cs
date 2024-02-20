@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests.DefectDojoConnector.Tests;
+namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnector.Tests;
 
 public class CreateProductAsyncTests
 {

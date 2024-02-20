@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using System.Net;
+﻿using System.Net;
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Tests.AutoDataAttribute;
 using DefectDojoJob.Tests.Helpers.Tests;
@@ -7,27 +6,26 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 
-namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests.DefectDojoConnector.Tests;
+namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnector.Tests;
 
-public class GetProductTypeByNameAsyncTests
+public class GetMetadataAsyncTests
 {
-    [Theory]
+        [Theory]
     [AutoMoqData]
-    public async Task WhenGetProductTypeByName_URiIsCorrect(IConfiguration configuration, string name)
+    public async Task WhenGetMetadata_URiIsCorrect(IConfiguration configuration,string key, string value, Metadata res)
     {
         //Arrange
-        var res = new ProductType(1, new DateTime(), new DateTime(), name);
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        await sut.GetProductTypeByNameAsync(name);
+        await sut.GetMetadataAsync(new Dictionary<string, string>(){{key,value}});
 
         //Assert
-        var expectedAbsolutePath = "/product_types/";
-        var expectedQuery = $"?name={name}";
+        var expectedAbsolutePath = "/metadata/";
+        var expectedQuery = $"?{key}={value}";
 
         var actualUri = fakeHttpHandler.RequestUrl ?? new Uri("");
         actualUri.Query.Should().BeEquivalentTo(expectedQuery);
@@ -36,7 +34,7 @@ public class GetProductTypeByNameAsyncTests
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenSuccessful_ReturnProductType(IConfiguration configuration, string name, DateTime created, DateTime updated)
+    public async Task WhenSuccessful_ReturnMetadata(IConfiguration configuration, Metadata res)
     {
         //Arrange
  
@@ -46,10 +44,10 @@ public class GetProductTypeByNameAsyncTests
             ""previous"": null,
             ""results"": [
             {{
-            ""id"": 1,
-            ""name"" :""{name}"",
-            ""updated"": ""{updated.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ")}"",
-            ""created"": ""{created.ToString("yyyy-MM-ddTHH:mm:ss.fffffffZ")}"",
+            ""id"": {res.Id},
+            ""product"" :""{res.Product}"",
+            ""name"": ""{res.Name}"",
+            ""value"": ""{res.Value}"",
         }}]
         }}";
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, apiResponse);
@@ -58,30 +56,45 @@ public class GetProductTypeByNameAsyncTests
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        var actualRes = await sut.GetProductTypeByNameAsync(name);
-        var expectedRes = new ProductType(1,updated,created,name);
+        var actualRes = await sut.GetMetadataAsync(new Dictionary<string, string>());
 
         //Assert
-        actualRes.Should().BeEquivalentTo(expectedRes);
+        actualRes.Should().BeEquivalentTo(res);
     }
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenStatusUnsuccessful_ErrorThrown(IConfiguration configuration, string name)
+    public async Task WhenStatusUnsuccessfulButNot404_ErrorThrown(IConfiguration configuration, Metadata res)
     {
         //Arrange
-        var res = new ProductType(1,new DateTime(),new DateTime(),name);
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Forbidden, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        Func<Task> act = () => sut.GetProductTypeByNameAsync(name);
+        Func<Task> act = () => sut.GetMetadataAsync(new Dictionary<string, string>());
 
         //Assert
         await act.Should().ThrowAsync<Exception>()
             .Where(e => e.Message.Contains("Error while processing the request")
                         && e.Message.Contains(HttpStatusCode.Forbidden.ToString()));
+    }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task When404_ReturnNull(IConfiguration configuration, Metadata res)
+    {
+        //Arrange
+        var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.NotFound, JsonConvert.SerializeObject(res));
+        var httpClient = new HttpClient(fakeHttpHandler);
+        httpClient.BaseAddress = new Uri("https://test.be");
+        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+
+        //Act
+        var actualRes = await sut.GetMetadataAsync(new Dictionary<string, string>());
+
+        //Assert
+        actualRes.Should().BeNull();
     }
 }
