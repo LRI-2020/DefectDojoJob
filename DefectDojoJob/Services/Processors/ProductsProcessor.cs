@@ -1,4 +1,5 @@
-﻿using DefectDojoJob.Models.DefectDojo;
+﻿using System.ComponentModel.DataAnnotations;
+using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Models.Processor.Results;
@@ -11,6 +12,7 @@ public class ProductsProcessor : IProductsProcessor
     private readonly IConfiguration configuration;
     private readonly IDefectDojoConnector defectDojoConnector;
     private const string DefaultDescription = "Enter a description";
+    private const string CodeMetadataName = "AssetCode";
 
     public ProductsProcessor(IConfiguration configuration, IDefectDojoConnector defectDojoConnector)
     {
@@ -18,34 +20,32 @@ public class ProductsProcessor : IProductsProcessor
         this.defectDojoConnector = defectDojoConnector;
     }
 
-    public async Task<ProductsProcessingResult> ProcessProductsAsync(List<AssetProjectInfo> projects,
+    public async Task<List<ProductProcessingResult>> ProcessProductsAsync(List<AssetProjectInfo> projects,
         List<AssetToDefectDojoMapper> users)
     {
-        var result = new ProductsProcessingResult();
+        var result = new List<ProductProcessingResult>();
         foreach (var project in projects)
         {
+            var res = new ProductProcessingResult();
             try
             {
                 var productId = await ExistingProjectAsync(project);
-                switch (productId)
+                res = productId switch
                 {
-                    case null:
-                        result.Entities.Add(await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Create));
-                        break;
-                    case not null:
-                        result.Entities.Add(await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Update, productId));
-                        break;
-                }
+                    null => await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Create),
+                    not null => await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Update, productId)
+                };
             }
-            
             catch (Exception e)
             {
-                if (e is WarningAssetProjectInfoProcessor warning) result.Warnings.Add(warning);
+                if (e is WarningAssetProjectInfoProcessor warning) res.Warnings.Add(warning);
                 else
                 {
-                    result.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, project.Code, EntityType.Product));
+                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, project.Code, EntityType.Product));
                 }
             }
+
+            result.Add(res);
         }
 
         return result;
@@ -55,7 +55,7 @@ public class ProductsProcessor : IProductsProcessor
     {
         var searchParams = new Dictionary<string, string>
         {
-            { "name", "AssetCode" },
+            { "name", CodeMetadataName },
             { "value", project.Code }
         };
 
@@ -83,12 +83,73 @@ public class ProductsProcessor : IProductsProcessor
                 code, EntityType.Product);
     }
 
-    public async Task<AssetToDefectDojoMapper> ProcessProductAsync(AssetProjectInfo projectInfo,
+    public async Task<ProductProcessingResult> ProcessProductAsync(AssetProjectInfo projectInfo,
         List<AssetToDefectDojoMapper> users, AssetProjectInfoProcessingAction requiredAction, int? productId = null)
     {
+        var result = new ProductProcessingResult();
         var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Code);
+        var product = ConstructProductFromProject(projectInfo, productType, users);
 
-        var product = new Product(projectInfo.Name, SetDescription(projectInfo))
+        switch (requiredAction)
+        {
+            case AssetProjectInfoProcessingAction.Create:
+                (await CreateProjectInfoAsync(product, projectInfo)).ForEach(ent => result.Entities.Add(ent));
+                break;
+            case AssetProjectInfoProcessingAction.Update:
+                result.Entities.Add(await UpdateProjectInfoAsync(product, productId, projectInfo.Code));
+                break;
+            case AssetProjectInfoProcessingAction.None:
+            default:
+                throw new ArgumentOutOfRangeException(nameof(requiredAction), requiredAction, "Invalid action required on the product");
+        }
+
+        return result;
+    }
+
+    private async Task<AssetToDefectDojoMapper> UpdateProjectInfoAsync(Product product, int? productId, string code)
+    {
+        product.Id = productId ?? throw new ErrorAssetProjectInfoProcessor("Update product requested but no productId found or provided", product.Name, EntityType.Product);
+        var updateRes = await defectDojoConnector.UpdateProductAsync(product);
+        return new AssetToDefectDojoMapper(code, updateRes.Id, EntityType.Product);
+    }
+
+    private async Task<List<AssetToDefectDojoMapper>> CreateProjectInfoAsync(Product product, AssetProjectInfo pi)
+    {
+        var createRes = await defectDojoConnector.CreateProductAsync(product);
+        try
+        {
+            var metadataRes = await defectDojoConnector.CreateMetadataAsync
+                (ConstructMetadata(CodeMetadataName, pi.Code, product.ProductTypeId));
+            return new List<AssetToDefectDojoMapper>()
+            {
+                new(metadataRes.Value, createRes.Id, EntityType.Product),
+                new(metadataRes.Value, metadataRes.Id, EntityType.Metadata)
+            };
+        }
+        catch (Exception)
+        {
+            if(await defectDojoConnector.DeleteProductAsync(createRes.Id))
+                throw new ErrorAssetProjectInfoProcessor($"Metadata with AssetCode could not be created; Compensation successful- Product '{createRes.Name}' with code {pi.Code} has been deleted",
+                    pi.Code,EntityType.Product);
+           
+            throw new ErrorAssetProjectInfoProcessor($"Metadata with AssetCode could not be created; Compensation has failed - Product '{createRes.Name}' with code {pi.Code} could not be deleted.PLease clean DefectDojo manually",
+                pi.Code,EntityType.Product);
+        }
+    }
+
+    private static Metadata ConstructMetadata(string name, string value, int productId)
+    {
+        return new Metadata
+        {
+            Name = name,
+            Product = productId,
+            Value = value
+        };
+    }
+
+    private static Product ConstructProductFromProject(AssetProjectInfo projectInfo, int productType, List<AssetToDefectDojoMapper> users)
+    {
+        return new Product(projectInfo.Name, SetDescription(projectInfo))
         {
             ProductTypeId = productType,
             Lifecycle = GetLifeCycle(projectInfo.State),
@@ -98,20 +159,6 @@ public class ProductsProcessor : IProductsProcessor
             UserRecords = projectInfo.NumberOfUsers,
             ExternalAudience = projectInfo.OpenToPartner ?? false
         };
-
-        switch (requiredAction)
-        {
-            case AssetProjectInfoProcessingAction.Create :
-                var createRes = await defectDojoConnector.CreateProductAsync(product);
-                return new AssetToDefectDojoMapper(projectInfo.Code, (createRes.Id));
-            case AssetProjectInfoProcessingAction.Update:
-                product.Id = productId ?? throw new ErrorAssetProjectInfoProcessor("Update product requested but no productId found or provided",product.Name,EntityType.Product);
-                var updateRes = await defectDojoConnector.UpdateProductAsync(product);
-                return new AssetToDefectDojoMapper(projectInfo.Code, updateRes.Id);
-            case AssetProjectInfoProcessingAction.None:
-            default:
-                throw new ArgumentOutOfRangeException(nameof(requiredAction), requiredAction, "Invalid action required on the product");
-        }
     }
 
     private static string SetDescription(AssetProjectInfo projectInfo)
@@ -135,7 +182,7 @@ public class ProductsProcessor : IProductsProcessor
 
         return res?.Id ??
                throw new ErrorAssetProjectInfoProcessor(
-                   $"No product type was found, neither with the provided type nor with the default type", 
+                   $"No product type was found, neither with the provided type nor with the default type",
                    assetIdentifier, EntityType.Product);
     }
 

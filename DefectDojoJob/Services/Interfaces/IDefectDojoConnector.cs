@@ -14,4 +14,6 @@ public interface IDefectDojoConnector
 
 
     Task<Product> UpdateProductAsync(Product product);
+    Task<Metadata> CreateMetadataAsync(Metadata metadata);
+    Task<bool> DeleteProductAsync(int createResId);
 }

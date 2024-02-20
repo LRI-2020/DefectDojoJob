@@ -4,6 +4,7 @@ public enum EntityType
 {
     Unknown,
     User,
-    Product
+    Product,
+    Metadata
     
 }

@@ -39,7 +39,7 @@ public class UsersProcessor : IUsersProcessor
         var user = await defectDojoConnector.GetDefectDojoUserByUsernameAsync(username);
         if (user != null)
         {
-            return new AssetToDefectDojoMapper(username, user.Id);
+            return new AssetToDefectDojoMapper(username, user.Id, EntityType.User);
         }
 
         throw new WarningAssetProjectInfoProcessor($"Warning : user {username} does not exist in Defect Dojo", username, EntityType.User);
