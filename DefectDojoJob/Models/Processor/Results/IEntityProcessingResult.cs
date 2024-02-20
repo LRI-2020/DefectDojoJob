@@ -2,9 +2,9 @@
 
 namespace DefectDojoJob.Models.Processor.Results;
 
-public interface IEntitiesProcessingResult
+public interface IEntityProcessingResult
 {
-    public List<AssetToDefectDojoMapper> Entities { get; set; }
+    public AssetToDefectDojoMapper? Entity { get; set; }
     public List<ErrorAssetProjectInfoProcessor> Errors { get; set; }
     public List<WarningAssetProjectInfoProcessor> Warnings { get; set; } 
     public EntityType EntityType { get; }

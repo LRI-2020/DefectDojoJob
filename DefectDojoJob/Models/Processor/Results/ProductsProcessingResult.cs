@@ -2,10 +2,7 @@
 
 namespace DefectDojoJob.Models.Processor.Results;
 
-public class ProductsProcessingResult: IEntitiesProcessingResult
+public class ProductsProcessingResult
 {
-    public List<AssetToDefectDojoMapper> Entities { get; set; } = new();
-    public List<ErrorAssetProjectInfoProcessor> Errors { get; set; } = new();
-    public List<WarningAssetProjectInfoProcessor> Warnings { get; set; } = new();
-    public EntityType EntityType { get; } = EntityType.Product;
+    public List<ProductProcessingResult> ProductsProcessingResults { get; set; }
 }

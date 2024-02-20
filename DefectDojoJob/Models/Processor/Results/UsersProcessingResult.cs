@@ -1,15 +1,11 @@
-﻿using DefectDojoJob.Models;
-using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Models.Processor.Errors;
-using DefectDojoJob.Models.Processor.Results;
+﻿using DefectDojoJob.Models.Processor.Errors;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Models.Processor.Results;
 
-public class UsersProcessingResult: IEntitiesProcessingResult
+public class UserProcessingResult: IEntityProcessingResult
 {
-    public List<AssetToDefectDojoMapper> Entities { get; set; } = new();
+    public AssetToDefectDojoMapper? Entity { get; set; }
     public List<ErrorAssetProjectInfoProcessor> Errors { get; set; } = new();
     public List<WarningAssetProjectInfoProcessor> Warnings { get; set; } = new();
-    public bool ProcessingSuccessful { get; set; }
     public EntityType EntityType { get; } = EntityType.User;
 }

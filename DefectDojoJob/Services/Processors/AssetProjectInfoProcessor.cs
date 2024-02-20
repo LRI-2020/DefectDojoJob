@@ -10,7 +10,7 @@ public class AssetProjectInfoProcessor
     private readonly IUsersProcessor usersProcessor;
     private readonly IProductsProcessor productsProcessor;
 
-    public AssetProjectInfoProcessor( 
+    public AssetProjectInfoProcessor(
         IEntitiesExtractor entitiesExtractor,
         IUsersProcessor usersProcessor,
         IProductsProcessor productsProcessor)
@@ -27,14 +27,17 @@ public class AssetProjectInfoProcessor
         if (!assetProjectInfos.Any()) return processingResult;
 
         var extraction = entitiesExtractor.ExtractEntities(assetProjectInfos);
-        if (extraction.Users.Any()) processingResult.UsersProcessingResult = await usersProcessor.ProcessUsersAsync(extraction.Users.ToList());
+        List<AssetToDefectDojoMapper> users = new();
+        
+        if (extraction.Users.Any())
+        {
+            processingResult.UsersProcessingResult =
+                await usersProcessor.ProcessUsersAsync(extraction.Users.ToList());
+            users = processingResult.UsersProcessingResult.Select<UserProcessingResult, AssetToDefectDojoMapper>(r => r.Entity).ToList();
+        }
 
-        processingResult.ProductsProcessingResult = await productsProcessor.ProcessProductsAsync(assetProjectInfos,
-            processingResult.UsersProcessingResult.Entities);
+        processingResult.ProductsProcessingResults = await productsProcessor.ProcessProductsAsync(assetProjectInfos, users);
 
         return processingResult;
     }
-
-
-
 }
