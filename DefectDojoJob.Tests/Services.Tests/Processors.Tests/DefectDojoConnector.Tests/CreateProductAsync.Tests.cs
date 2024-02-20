@@ -1,19 +1,16 @@
 ﻿using System.Net;
-using System.Text;
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Services;
 using DefectDojoJob.Tests.AutoDataAttribute;
 using DefectDojoJob.Tests.Helpers.Tests;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
-using Moq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Xunit.Abstractions;
 
-namespace DefectDojoJob.Tests.Services.Tests;
+namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests.DefectDojoConnector.Tests;
 
-public class DefectDojoConnectorTests
+public class CreateProductAsyncTests
 {
     [Theory]
     [AutoMoqData]
@@ -24,7 +21,7 @@ public class DefectDojoConnectorTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoConnector(configuration,httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration,httpClient);
 
         var productToCreate = new Product(name, description)
         {
@@ -53,7 +50,7 @@ public class DefectDojoConnectorTests
             lifecycle = Lifecycle.construction
         };
  
-        var actualBody = JsonConvert.DeserializeObject(fakeHttpHandler.requestBody??"");
+        var actualBody = JsonConvert.DeserializeObject(fakeHttpHandler.RequestBody??"");
         var expected = JObject.Parse(JsonConvert.SerializeObject(expectedBody));
         actualBody.Should().BeEquivalentTo(expected);
     }

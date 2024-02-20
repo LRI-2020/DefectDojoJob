@@ -2,6 +2,7 @@
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Services;
 using DefectDojoJob.Services.Interfaces;
+using DefectDojoJob.Tests.Tests.Shared;
 using Microsoft.Extensions.Configuration;
 using Moq;
 

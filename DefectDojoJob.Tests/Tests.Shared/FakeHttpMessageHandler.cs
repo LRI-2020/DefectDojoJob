@@ -1,19 +1,19 @@
 ﻿using System.Net;
-using System.Net.Http.Json;
 using System.Text;
-using Newtonsoft.Json;
 
-namespace DefectDojoJob.Tests.Helpers.Tests;
+namespace DefectDojoJob.Tests.Tests.Shared;
 
 /// <summary>
 /// Fake the handler to define the response of the http call;
-/// Store the request body in the resquestBody property
+/// Store the request body in the request body property
+/// Store the request Url in the request Url property
 /// </summary>
 public class FakeHttpMessageHandler : HttpMessageHandler
     {
         private readonly HttpStatusCode statusCode;
         private readonly string? responseContent;
-        public string? requestBody;
+        public string? RequestBody;
+        public Uri? RequestUrl;
       
         public FakeHttpMessageHandler(HttpStatusCode statusCode, string? jsonString = null)
         {
@@ -23,13 +23,15 @@ public class FakeHttpMessageHandler : HttpMessageHandler
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+
             try
             {
-                requestBody = await request.Content?.ReadAsStringAsync(cancellationToken);
+                RequestUrl = request.RequestUri;
+                RequestBody = await (request.Content ?? new StringContent("")).ReadAsStringAsync(cancellationToken)??"";
             }
             catch (Exception e)
             {
-                requestBody = "error when retrieving requestBody";
+                RequestBody = "error when retrieving requestBody";
                 Console.WriteLine(e.Message);
             }
             var response = new HttpResponseMessage()
