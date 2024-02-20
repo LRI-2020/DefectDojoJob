@@ -8,11 +8,11 @@ using Newtonsoft.Json;
 
 namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnector.Tests;
 
-public class GetMetadataAsyncTests
+public class GetProductByNameAsyncTests
 {
     [Theory]
     [AutoMoqData]
-    public async Task WhenGetMetadata_URiIsCorrect(IConfiguration configuration, string key, string value, Metadata res)
+    public async Task WhenGetProductByName_URiIsCorrect(IConfiguration configuration, string name, Product res)
     {
         //Arrange
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
@@ -21,11 +21,11 @@ public class GetMetadataAsyncTests
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        await sut.GetMetadataAsync(new Dictionary<string, string>() { { key, value } });
+        await sut.GetProductByNameAsync(name);
 
         //Assert
-        var expectedAbsolutePath = "/metadata/";
-        var expectedQuery = $"?{key}={value}";
+        var expectedAbsolutePath = "/products/";
+        var expectedQuery = $"?name={name}";
 
         var actualUri = fakeHttpHandler.RequestUrl ?? new Uri("");
         actualUri.Query.Should().BeEquivalentTo(expectedQuery);
@@ -34,10 +34,10 @@ public class GetMetadataAsyncTests
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenSuccessful_ReturnMetadata(IConfiguration configuration, Metadata res)
+    public async Task WhenSuccessful_ReturnProduct(IConfiguration configuration, string name, string description,int id,int type)
     {
         //Arrange
-
+        var res = new Product(name, description) { Id = id, ProductTypeId = type };
         var apiResponse = $@"{{
            ""count"": 7,
             ""next"": null,
@@ -45,9 +45,9 @@ public class GetMetadataAsyncTests
             ""results"": [
             {{
             ""id"": {res.Id},
-            ""product"" :""{res.Product}"",
+            ""description"" :""{res.Description}"",
             ""name"": ""{res.Name}"",
-            ""value"": ""{res.Value}"",
+            ""prod_type"":""{res.ProductTypeId}""
         }}]
         }}";
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, apiResponse);
@@ -56,7 +56,7 @@ public class GetMetadataAsyncTests
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        var actualRes = await sut.GetMetadataAsync(new Dictionary<string, string>());
+        var actualRes = await sut.GetProductByNameAsync(name);
 
         //Assert
         actualRes.Should().BeEquivalentTo(res);
@@ -64,7 +64,7 @@ public class GetMetadataAsyncTests
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenStatusUnsuccessfulButNot404_ErrorThrown(IConfiguration configuration, Metadata res)
+    public async Task WhenStatusUnsuccessfulButNot404_ErrorThrown(IConfiguration configuration, string name, Product res)
     {
         //Arrange
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Forbidden, JsonConvert.SerializeObject(res));
@@ -73,7 +73,7 @@ public class GetMetadataAsyncTests
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        Func<Task> act = () => sut.GetMetadataAsync(new Dictionary<string, string>());
+        Func<Task> act = () => sut.GetProductByNameAsync(name);
 
         //Assert
         await act.Should().ThrowAsync<Exception>()
@@ -83,7 +83,7 @@ public class GetMetadataAsyncTests
 
     [Theory]
     [AutoMoqData]
-    public async Task When404_ReturnNull(IConfiguration configuration, Metadata res)
+    public async Task When404_ReturnNull(IConfiguration configuration, string name, Product res)
     {
         //Arrange
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.NotFound, JsonConvert.SerializeObject(res));
@@ -92,7 +92,7 @@ public class GetMetadataAsyncTests
         var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
 
         //Act
-        var actualRes = await sut.GetMetadataAsync(new Dictionary<string, string>());
+        var actualRes = await sut.GetProductByNameAsync(name);
 
         //Assert
         actualRes.Should().BeNull();
