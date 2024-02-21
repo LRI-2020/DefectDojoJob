@@ -26,6 +26,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddTransient<IUsersAdapter,UsersAdapter>();
         services.AddTransient<IUsersExtractor,UsersExtractor>();
         services.AddTransient<IUsersProcessor,UsersProcessor>();
+        services.AddTransient<IGroupsProcessor,GroupsProcessor>();
+        services.AddTransient<IProjectsAdapter,ProjectsAdapter>();
         services.AddTransient<IProductsProcessor,ProductsProcessor>();
         services.AddTransient<AssetProjectsProcessor>();
         services.AddSingleton<IAssetProjectValidator,AssetProjectValidator>();

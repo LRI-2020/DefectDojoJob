@@ -6,6 +6,8 @@ public enum EntitiesType
     User,
     Product,
     Metadata,
-    DojoGroup
+    DojoGroup,
+    Engagement,
+    Endpoint
     
 }

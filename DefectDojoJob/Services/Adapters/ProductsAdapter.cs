@@ -1,35 +1,42 @@
-﻿using DefectDojoJob.Models.Extractions;
+﻿using DefectDojoJob.Models.Adapters;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Services.Interfaces;
 
 namespace DefectDojoJob.Services.Adapters;
 
-public class ProductsAdapter
+public class ProjectsAdapter : IProjectsAdapter
 {
-    private readonly IProductRelatedEntitiesConverter productRelatedEntitiesConverter;
     private readonly IProductsProcessor productsProcessor;
 
-    public ProductsAdapter(IProductRelatedEntitiesConverter productRelatedEntitiesConverter, IProductsProcessor productsProcessor)
+    public ProjectsAdapter( IProductsProcessor productsProcessor)
     {
-        this.productRelatedEntitiesConverter = productRelatedEntitiesConverter;
         this.productsProcessor = productsProcessor;
     }
 
-    public void StartAdapterAsync(List<AssetProject> projects, List<AssetToDefectDojoMapper> users)
+    public async Task<List<ProductAdapterResult>> StartAdapterAsync(List<AssetProject> projects, List<AssetToDefectDojoMapper> users)
     {
+        var res = new List<ProductAdapterResult>();
         foreach (var project in projects)
         {
-            var entitiesExtraction = productRelatedEntitiesConverter.ConvertProductRelatedEntities(project);
-            AdaptProject(entitiesExtraction, users);
+            res.Add(await AdaptProjectAsync(project, users));
         }
+
+        return res;
     }
 
-    public void AdaptProject(ProductAdapterResult conversion, List<AssetToDefectDojoMapper> users)
+    public async Task<ProductAdapterResult> AdaptProjectAsync(AssetProject project, List<AssetToDefectDojoMapper> users)
     {
-        //var productResult = await productsProcessor.ProcessProductAsync(conversion.Product, users);
+        var result = new ProductAdapterResult();
+        result.ProductResult = await productsProcessor.ProcessProductAsync(project, users);
+
+        return result;
     }
     
-    //Start adapter
     //Foreach project, extract entities
     //Then process in creation or update
+}
+
+public interface IProjectsAdapter
+{
+    public Task<List<ProductAdapterResult>> StartAdapterAsync(List<AssetProject> projects, List<AssetToDefectDojoMapper> users);
 }
