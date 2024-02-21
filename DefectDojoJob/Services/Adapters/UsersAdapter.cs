@@ -9,8 +9,6 @@ public class UsersAdapter: IUsersAdapter
     private readonly IUsersProcessor usersProcessor;
     private readonly IGroupsProcessor groupsProcessor;
     private readonly IUsersExtractor usersExtractor;
-    private HashSet<string> Usernames { get; set; } = new();
-    private HashSet<string> TeamNames { get; set; } = new();
 
     public UsersAdapter(IUsersProcessor usersProcessor, IGroupsProcessor groupsProcessor, IUsersExtractor usersExtractor)
     {
@@ -20,13 +18,15 @@ public class UsersAdapter: IUsersAdapter
     }
     public async Task<UsersAdaptersResults> StartUsersAdapterAsync(List<AssetProject> assetProjectInfos)
     {
+        var usernames = new HashSet<string>();
+        var teamNames = new HashSet<string>();
         assetProjectInfos.ForEach(p =>
         {
-            if (!string.IsNullOrEmpty(p.Team?.Trim())) TeamNames.Add(p.Team);
-            Usernames.UnionWith(usersExtractor.ExtractValidUsernames(p));
+            if (!string.IsNullOrEmpty(p.Team?.Trim())) teamNames.Add(p.Team);
+            usernames.UnionWith(usersExtractor.ExtractValidUsernames(p));
         });
-        var usersResult = await usersProcessor.ProcessUsersAsync(Usernames.ToList()); 
-        var groupsResult = await groupsProcessor.ProcessGroupsAsync(TeamNames.ToList()); 
+        var usersResult = await usersProcessor.ProcessUsersAsync(usernames.ToList()); 
+        var groupsResult = await groupsProcessor.ProcessGroupsAsync(teamNames.ToList()); 
  
         return new UsersAdaptersResults(usersResult,groupsResult);
     }

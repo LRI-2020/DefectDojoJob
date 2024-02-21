@@ -20,12 +20,12 @@ public class UsersProcessorTests
     {
         //Arrange
         defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username))
-            .ReturnsAsync(new User() { Id = 1, UserName = username });
+            .ReturnsAsync(new User(username) { Id = 1 });
 
         var res = await sut.ProcessUserAsync(username);
 
-        res.Entity.AssetIdentifier.Should().Be(username);
-        res.Entity.DefectDojoId.Should().Be(1);
+        res.AssetIdentifier.Should().Be(username);
+        res.DefectDojoId.Should().Be(1);
     }
 
     [Theory]
@@ -52,16 +52,15 @@ public class UsersProcessorTests
     {
         //Arrange
         defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username))
-            .ReturnsAsync(new User() { Id = 1, UserName = username });
+            .ReturnsAsync(new User(username) { Id = 1 });
 
         var usernames = new List<string>() { username };
 
         var res = await sut.ProcessUsersAsync(usernames);
 
-        var entities = res.Select(r => r.Entity).ToList();
-        entities.Count.Should().Be(1);
-        entities[0].AssetIdentifier.Should().Be(username);
-        entities[0].DefectDojoId.Should().Be(1);
+        res.Entities.Count.Should().Be(1);
+        res.Entities[0].AssetIdentifier.Should().Be(username);
+        res.Entities[0].DefectDojoId.Should().Be(1);
     }
 
     [Theory]
@@ -76,12 +75,9 @@ public class UsersProcessorTests
         var usernames = new List<string>() { username };
 
         var res = await sut.ProcessUsersAsync(usernames);
-        var entities = res.Where(r=>r.Entity!=null).Select(r => r.Entity).ToList();
-        var warnings = res.SelectMany(r => r.Warnings).ToList();
-
-        entities.Should().BeEmpty();
-        warnings.Count.Should().Be(1);
-        warnings[0].AssetIdentifier.Should().Be(username);
+        res.Entities.Should().BeEmpty();
+        res.Warnings.Count.Should().Be(1);
+        res.Warnings[0].AssetIdentifier.Should().Be(username);
     }
 
     [Theory]
@@ -96,11 +92,9 @@ public class UsersProcessorTests
         var usernames = new List<string>() { username };
 
         var res = await sut.ProcessUsersAsync(usernames);
-        var entities = res.Where(r=>r.Entity!=null).Select(r => r.Entity).ToList();
-        var errors = res.SelectMany(r => r.Errors).ToList();
-        entities.Should().BeEmpty();
-        errors.Count.Should().Be(1);
-        errors[0].AssetIdentifier.Should().Be(username);
+       res.Entities.Should().BeEmpty();
+        res.Errors.Count.Should().Be(1);
+        res.Errors[0].AssetIdentifier.Should().Be(username);
     }
 
     [Theory]
@@ -111,14 +105,13 @@ public class UsersProcessorTests
     {
         //Arrange
         defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(It.IsAny<string>()))
-            .ReturnsAsync(new User() { Id = 1, UserName = "username" });
+            .ReturnsAsync(new User("username") { Id = 1});
 
         var itemsNumber = new Random().Next(3, 15);
         var usernames = new Fixture().CreateMany<string>(itemsNumber).ToList();
 
         var res = await sut.ProcessUsersAsync(usernames);
-        var entities = res.Select(r => r.Entity).ToList();
-        entities.Count.Should().Be(itemsNumber);
+        res.Entities.Count.Should().Be(itemsNumber);
     }
 
     [Theory]
@@ -129,7 +122,7 @@ public class UsersProcessorTests
     {
         //Arrange
         defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username3))
-            .ReturnsAsync(new User() { Id = 1, UserName = username1 });
+            .ReturnsAsync(new User(username1) { Id = 1});
         defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username2))
             .ReturnsAsync((User?)null);
         defectDojoConnectorMock.Setup(d => d.GetDefectDojoUserByUsernameAsync(username1))
@@ -138,11 +131,8 @@ public class UsersProcessorTests
         var usernames = new List<string>() { username1, username2, username3 };
 
         var res = await sut.ProcessUsersAsync(usernames);
-        var entities = res.Where(r=>r.Entity!=null).Select(r => r.Entity).ToList();
-        var warnings = res.SelectMany(r => r.Warnings).ToList();
-        var errors = res.SelectMany(r => r.Errors).ToList();
-        entities.Count.Should().Be(1);
-        warnings.Count.Should().Be(1);
-        errors.Count.Should().Be(1);
+        res.Entities.Count.Should().Be(1);
+        res.Warnings.Count.Should().Be(1);
+        res.Errors.Count.Should().Be(1);
     }
 }

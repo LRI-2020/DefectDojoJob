@@ -4,7 +4,7 @@ namespace DefectDojoJob.Models.Adapters;
 
 public class UsersAdaptersResults
 {
-    public UsersAdaptersResults(UsersProcessingResult usersProcessingResult, DojoGroupProcessingResult dojoGroupsProcessingResult)
+    public UsersAdaptersResults(UsersProcessingResult usersProcessingResult, DojoGroupsProcessingResult dojoGroupsProcessingResult)
     {
         UsersProcessingResult = usersProcessingResult;
         DojoGroupsProcessingResult = dojoGroupsProcessingResult;
@@ -12,6 +12,6 @@ public class UsersAdaptersResults
 
     public UsersProcessingResult UsersProcessingResult { get; set; }
 
-    public DojoGroupProcessingResult DojoGroupsProcessingResult { get; set; }
+    public DojoGroupsProcessingResult DojoGroupsProcessingResult { get; set; }
 
 }

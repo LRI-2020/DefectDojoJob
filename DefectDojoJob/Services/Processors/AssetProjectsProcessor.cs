@@ -27,10 +27,15 @@ public class AssetProjectsProcessor
             return processingResult;
         }
 
-        var usersAdaptersResults = await usersAdapter.StartUsersAdapterAsync(assetProjectInfos);
-        List<AssetToDefectDojoMapper> users = usersAdaptersResults.UsersProcessingResult.Entities;
-        
-        processingResult.ProductsProcessingResults = await productsProcessor.ProcessProductsAsync(assetProjectInfos, users);
+        //Users Adapter
+        var usersAdapterRes = await usersAdapter.StartUsersAdapterAsync(assetProjectInfos);
+        processingResult.UsersProcessingResult = usersAdapterRes.UsersProcessingResult;
+        processingResult.DojoGroupsProcessingResult = usersAdapterRes.DojoGroupsProcessingResult;
+
+        //ProductsAdapter
+        var users = usersAdapterRes.UsersProcessingResult.Entities;
+        processingResult.ProductsProcessingResults =
+            await productsProcessor.ProcessProductsAsync(assetProjectInfos, users);
 
         return processingResult;
     }

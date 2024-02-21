@@ -3,10 +3,12 @@ using DefectDojoJob.Services.Interfaces;
 
 namespace DefectDojoJob.Services.Processors;
 
-public class GroupsProcessor: IGroupsProcessor
+public class GroupsProcessor : IGroupsProcessor
 {
-    public Task<DojoGroupProcessingResult> ProcessGroupsAsync(List<string> toList)
+    public async Task<DojoGroupsProcessingResult> ProcessGroupsAsync(List<string> teamNames)
     {
-        throw new NotImplementedException();
+        // TODO Implement
+        var res = await Task.Run(() => new DojoGroupsProcessingResult());
+        return res;
     }
 }

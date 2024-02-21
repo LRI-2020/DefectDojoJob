@@ -4,5 +4,5 @@ namespace DefectDojoJob.Services.Interfaces;
 
 public interface IGroupsProcessor
 {
-    Task<DojoGroupProcessingResult> ProcessGroupsAsync(List<string> toList);
+    Task<DojoGroupsProcessingResult> ProcessGroupsAsync(List<string> teamNames);
 }

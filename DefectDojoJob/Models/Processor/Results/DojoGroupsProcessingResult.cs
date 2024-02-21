@@ -2,7 +2,7 @@
 
 namespace DefectDojoJob.Models.Processor.Results;
 
-public class DojoGroupProcessingResult : IEntitiesProcessingResult
+public class DojoGroupsProcessingResult : IEntitiesProcessingResult
 {
     public List<AssetToDefectDojoMapper> Entities { get; set; } = new();
     public List<ErrorAssetProjectProcessor> Errors { get; set; } = new();
