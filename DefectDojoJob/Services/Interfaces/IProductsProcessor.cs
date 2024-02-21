@@ -8,5 +8,5 @@ public interface IProductsProcessor
 {
 
     public Task<ProductProcessingResult> ProcessProductAsync(AssetProject project,
-        List<AssetToDefectDojoMapper> users);
+        List<AssetToDefectDojoMapper> users, ProductAdapterAction action, int? productId =null);
 }
