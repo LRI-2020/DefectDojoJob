@@ -2,7 +2,7 @@
 
 namespace DefectDojoJob.Models.Processor;
 
-public class AssetProjectInfo
+public class AssetProject
 {
     public int? Id { get; set; }
 

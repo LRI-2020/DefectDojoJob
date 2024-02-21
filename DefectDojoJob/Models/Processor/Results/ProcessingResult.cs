@@ -4,6 +4,7 @@ namespace DefectDojoJob.Models.Processor.Results;
 
 public class ProcessingResult
 {
-    public List<UserProcessingResult> UsersProcessingResult { get; set; } = new();
+    public UsersProcessingResult UsersProcessingResult { get; set; } 
     public List<ProductProcessingResult> ProductsProcessingResults { get; set; } = new();
+    public List<string> GeneralErrors { get; set; } = new();
 }

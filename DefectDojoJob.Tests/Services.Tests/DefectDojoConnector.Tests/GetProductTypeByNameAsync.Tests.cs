@@ -19,7 +19,7 @@ public class GetProductTypeByNameAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         await sut.GetProductTypeByNameAsync(name);
@@ -54,7 +54,7 @@ public class GetProductTypeByNameAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, apiResponse);
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         var actualRes = await sut.GetProductTypeByNameAsync(name);
@@ -73,7 +73,7 @@ public class GetProductTypeByNameAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Forbidden, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         Func<Task> act = () => sut.GetProductTypeByNameAsync(name);

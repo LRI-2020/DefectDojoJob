@@ -16,7 +16,7 @@ public class ProcessProductsTests
 {
     [Theory]
     [AutoMoqData]
-    public async Task WhenProcessOk_ProjectsAddedToEntities(IConfiguration configuration,ProductType productType, Product product, Metadata metadata, List<AssetProjectInfo> projects,
+    public async Task WhenProcessOk_ProjectsAddedToEntities(IConfiguration configuration,ProductType productType, Product product, Metadata metadata, List<AssetProject> projects,
         List<AssetToDefectDojoMapper> users)
     {
         var defectDojoMock = new MockDefectDojoConnector().DefaultSetup(product, metadata, productType);
@@ -25,7 +25,7 @@ public class ProcessProductsTests
 
         //1 product and 1 metadata per project processed;
         var productEntities = res.Where(r=>r.Entity!=null).Select(r => r.Entity)
-            .Where(e => e.EntityType == EntityType.Product).ToList();
+            .Where(e => e.EntitiesType == EntitiesType.Product).ToList();
         productEntities.Count.Should().Be(projects.Count);
 
         var metadataEntities = res.SelectMany(r => r.MetadataMappers).ToList();
@@ -38,7 +38,7 @@ public class ProcessProductsTests
         DefectDojoJob.Services.Processors.ProductsProcessor sut, ProductType productType, Product productRes, Metadata metadataRes,
         List<AssetToDefectDojoMapper> users)
     {
-        var projects = new Fixture().CreateMany<AssetProjectInfo>(5).ToList();
+        var projects = new Fixture().CreateMany<AssetProject>(5).ToList();
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
         defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(It.IsAny<Metadata>())).ReturnsAsync(metadataRes);
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(productRes);
@@ -47,7 +47,7 @@ public class ProcessProductsTests
 
         var res = await sut.ProcessProductsAsync(projects, users);
 
-        var productEntities = res.Where(r => r.Entity != null && r.EntityType == EntityType.Product)
+        var productEntities = res.Where(r => r.Entity != null && r.EntitiesType == EntitiesType.Product)
             .Select(r => r.Entity)
             .ToList();
         productEntities.Count.Should().Be(projects.Count - 1);
@@ -64,10 +64,10 @@ public class ProcessProductsTests
     public async Task WhenProcessInWarning_WarningAddedToResult(IConfiguration configuration, Metadata metadata, ProductType productType, Product product,
         List<AssetToDefectDojoMapper> users)
     {
-        var projects = new Fixture().CreateMany<AssetProjectInfo>(5).ToList();
+        var projects = new Fixture().CreateMany<AssetProject>(5).ToList();
         var defectDojoConnectorMock = new MockDefectDojoConnector().DefaultSetup(product,metadata,productType);
         defectDojoConnectorMock.Setup(m => m.CreateProductAsync(It.Is<Product>(p => p.Name == projects[2].Name)))
-            .Throws<WarningAssetProjectInfoProcessor>();
+            .Throws<WarningAssetProjectProcessor>();
 
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
         var res = await sut.ProcessProductsAsync(projects, users);
@@ -82,9 +82,9 @@ public class ProcessProductsTests
     public async Task WhenCodeFoundButNotProject_ErrorAddedToResult(Metadata metadataRes,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
-        var projects = new List<AssetProjectInfo> { pi };
+        var projects = new List<AssetProject> { pi };
         defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string, string>>())).ReturnsAsync(metadataRes);
         defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync((Product?)null);
 
@@ -103,9 +103,9 @@ public class ProcessProductsTests
     public async Task WhenNameFoundButNotCode_ErrorAddedToResult(Product productRes,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
-        var projects = new List<AssetProjectInfo> { pi };
+        var projects = new List<AssetProject> { pi };
         defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string, string>>())).ReturnsAsync((Metadata?)null);
         defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync(productRes);
 
@@ -124,11 +124,11 @@ public class ProcessProductsTests
     public async Task WhenMetadataAndProductIdDifferent_ErrorAddedToResult(Product productRes, Metadata metadataRes,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
         metadataRes.Product = 1;
         productRes.Id = 2;
-        var projects = new List<AssetProjectInfo> { pi };
+        var projects = new List<AssetProject> { pi };
         defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string, string>>())).ReturnsAsync(metadataRes);
         defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync(productRes);
 
@@ -147,11 +147,11 @@ public class ProcessProductsTests
     public async Task WhenExistingProject_UpdateIsCalled(Product productRes, Metadata metadataRes, ProductType productType,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
         metadataRes.Product = 1;
         productRes.Id = 1;
-        var projects = new List<AssetProjectInfo> { pi };
+        var projects = new List<AssetProject> { pi };
         defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string, string>>())).ReturnsAsync(metadataRes);
         defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync(productRes);
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
@@ -166,9 +166,9 @@ public class ProcessProductsTests
     public async Task WhenNotExistingProject_CreateIsCalled(ProductType productType,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
-        var projects = new List<AssetProjectInfo> { pi };
+        var projects = new List<AssetProject> { pi };
         defectDojoConnectorMock.Setup(m => m.GetMetadataAsync(It.IsAny<Dictionary<string, string>>())).ReturnsAsync((Metadata?)null);
         defectDojoConnectorMock.Setup(m => m.GetProductByNameAsync(It.IsAny<string>())).ReturnsAsync((Product?)null);
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);

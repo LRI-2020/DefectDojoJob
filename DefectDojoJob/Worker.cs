@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Threading.Channels;
 using DefectDojoJob.Services;
+using DefectDojoJob.Services.InitialLoad;
 using DefectDojoJob.Services.Processors;
 using Newtonsoft.Json;
 
@@ -10,13 +11,13 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly InitialLoadService initialLoadService;
-    private readonly AssetProjectInfoProcessor assetProjectInfoProcessor;
+    private readonly AssetProjectsProcessor assetProjectsProcessor;
 
-    public Worker(ILogger<Worker> logger, InitialLoadService initialLoadService, AssetProjectInfoProcessor assetProjectInfoProcessor)
+    public Worker(ILogger<Worker> logger, InitialLoadService initialLoadService, AssetProjectsProcessor assetProjectsProcessor)
     {
         _logger = logger;
         this.initialLoadService = initialLoadService;
-        this.assetProjectInfoProcessor = assetProjectInfoProcessor;
+        this.assetProjectsProcessor = assetProjectsProcessor;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -24,7 +25,7 @@ public class Worker : BackgroundService
         _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
         var loadResult = (await initialLoadService.FetchInitialLoadAsync());
 
-        var results = await assetProjectInfoProcessor.StartProcessingAsync(loadResult.ProjectsToProcess);
+        var results = await assetProjectsProcessor.StartProcessingAsync(loadResult.ProjectsToProcess);
 
         Console.WriteLine(JsonConvert.SerializeObject(results));
       

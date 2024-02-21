@@ -40,7 +40,7 @@ public class UsersProcessorTests
 
         Func<Task> act = () => sut.ProcessUserAsync(username);
 
-        await act.Should().ThrowAsync<WarningAssetProjectInfoProcessor>()
+        await act.Should().ThrowAsync<WarningAssetProjectProcessor>()
             .Where(e => e.Message.Contains("user") && e.Message.Contains("does not exist"));
     }
 

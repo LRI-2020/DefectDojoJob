@@ -21,7 +21,7 @@ public class UpdateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration,httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration,httpClient);
 
         var productToUpdate = new Product(name, description)
         {
@@ -65,7 +65,7 @@ public class UpdateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         await sut.UpdateProductAsync(res);
@@ -86,7 +86,7 @@ public class UpdateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         var actualRes = await sut.UpdateProductAsync(res);
@@ -104,7 +104,7 @@ public class UpdateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler((HttpStatusCode)statusCode, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         Func<Task> act = () => sut.UpdateProductAsync(res);

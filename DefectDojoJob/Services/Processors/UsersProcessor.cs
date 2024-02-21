@@ -13,38 +13,34 @@ public class UsersProcessor : IUsersProcessor
     {
         this.defectDojoConnector = defectDojoConnector;
     }
-    public async Task<List<UserProcessingResult>> ProcessUsersAsync(List<string> userNames)
+    public async Task<UsersProcessingResult> ProcessUsersAsync(List<string> userNames)
     {
-        var res = new List<UserProcessingResult>();
+        var res = new UsersProcessingResult();
         foreach (var userName in userNames)
         {
-            var userProcessResult = new UserProcessingResult();
             try
             {
-                userProcessResult = await ProcessUserAsync(userName);
+                res.Entities.Add(await ProcessUserAsync(userName));
             }
             catch (Exception e)
             {
-                if (e is WarningAssetProjectInfoProcessor warning) userProcessResult.Warnings.Add(warning);
+                if (e is WarningAssetProjectProcessor warning) res.Warnings.Add(warning);
                 else
                 {
-                    userProcessResult.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, userName, EntityType.User));
+                    res.Errors.Add(new ErrorAssetProjectProcessor(e.Message, userName, EntitiesType.User));
                 }
             }
-            res.Add(userProcessResult);
         }
         return res;
     }
 
-    public async Task<UserProcessingResult> ProcessUserAsync(string username)
+    public async Task<AssetToDefectDojoMapper> ProcessUserAsync(string username)
     {
-        var res = new UserProcessingResult();
         var user = await defectDojoConnector.GetDefectDojoUserByUsernameAsync(username);
         if (user == null)
-            throw new WarningAssetProjectInfoProcessor(
-                $"Warning : user {username} does not exist in Defect Dojo", username, EntityType.User);
-        res.Entity= new AssetToDefectDojoMapper(username, user.Id, EntityType.User);
-        return res;
+            throw new WarningAssetProjectProcessor(
+                $"Warning : user {username} does not exist in Defect Dojo", username, EntitiesType.User);
+        return new AssetToMetadataMapper(user.UserName,user.Id);
 
     }
 

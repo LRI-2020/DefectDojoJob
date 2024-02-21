@@ -3,21 +3,21 @@
 public class AssetToDefectDojoMapper
 {
 
-    public AssetToDefectDojoMapper(string assetIdentifier, int defectDojoId, EntityType entityType)
+    public AssetToDefectDojoMapper(string assetIdentifier, int defectDojoId, EntitiesType entitiesType)
     {
-        EntityType = entityType;
+        EntitiesType = entitiesType;
         AssetIdentifier = assetIdentifier;
         DefectDojoId = defectDojoId;
     }
 
     public int DefectDojoId { get; set; }
-    public readonly EntityType EntityType;
+    public readonly EntitiesType EntitiesType;
    public string AssetIdentifier { get; set; }
 }
 
 public class AssetToProductMapper : AssetToDefectDojoMapper
 {
-    public AssetToProductMapper(string assetIdentifier, int defectDojoId) : base(assetIdentifier, defectDojoId, EntityType.Product)
+    public AssetToProductMapper(string assetIdentifier, int defectDojoId) : base(assetIdentifier, defectDojoId, EntitiesType.Product)
     {
     }
 }
@@ -25,7 +25,7 @@ public class AssetToProductMapper : AssetToDefectDojoMapper
 public class AssetToMetadataMapper : AssetToDefectDojoMapper
 {
     public AssetToMetadataMapper(string assetIdentifier, int defectDojoId) : 
-        base(assetIdentifier, defectDojoId, EntityType.Metadata)
+        base(assetIdentifier, defectDojoId, EntitiesType.Metadata)
     {
     }
 }

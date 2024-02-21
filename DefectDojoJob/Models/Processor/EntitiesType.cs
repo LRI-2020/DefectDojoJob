@@ -1,10 +1,11 @@
 ﻿namespace DefectDojoJob.Models.Processor;
 
-public enum EntityType
+public enum EntitiesType
 {
     Unknown,
     User,
     Product,
-    Metadata
+    Metadata,
+    DojoGroup
     
 }

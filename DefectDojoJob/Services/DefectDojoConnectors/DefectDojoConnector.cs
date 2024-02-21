@@ -8,7 +8,7 @@ using DefectDojoJob.Services.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Services.DefectDojoConnectors;
 
 public class DefectDojoConnector : IDefectDojoConnector
 {
@@ -89,8 +89,8 @@ public class DefectDojoConnector : IDefectDojoConnector
         var content = GenerateProductBody(product, Encoding.UTF8, "application/json");
         var response = await httpClient.PutAsync($"products/{product.Id}", content);
         if ((int)response.StatusCode == 404)
-            throw new ErrorAssetProjectInfoProcessor(
-                $"No product with Id {product.Id} found, update could not be processed", product.Name, EntityType.Product);
+            throw new ErrorAssetProjectProcessor(
+                $"No product with Id {product.Id} found, update could not be processed", product.Name, EntitiesType.Product);
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while updating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
 

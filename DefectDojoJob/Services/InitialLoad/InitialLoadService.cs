@@ -1,21 +1,21 @@
 ﻿using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Models.Processor.Results;
+using DefectDojoJob.Services.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DefectDojoJob.Services;
+namespace DefectDojoJob.Services.InitialLoad;
 
 public class InitialLoadService
 {
     private readonly HttpClient httpClient;
-    private readonly IAssetProjectInfoValidator assetProjectInfoValidator;
+    private readonly IAssetProjectValidator assetProjectValidator;
     private readonly IConfiguration configuration;
 
-    public InitialLoadService(HttpClient httpClient, IAssetProjectInfoValidator assetProjectInfoValidator, IConfiguration configuration)
+    public InitialLoadService(HttpClient httpClient, IAssetProjectValidator assetProjectValidator, IConfiguration configuration)
     {
         this.httpClient = httpClient;
-        this.assetProjectInfoValidator = assetProjectInfoValidator;
+        this.assetProjectValidator = assetProjectValidator;
         this.configuration = configuration;
     }
 
@@ -51,10 +51,10 @@ public class InitialLoadService
         {
             try
             {
-                var projectInfo = data.ToObject<AssetProjectInfo>();
+                var projectInfo = data.ToObject<AssetProject>();
                 if (projectInfo == null) throw new Exception("Invalid json model provided");
-                assetProjectInfoValidator.Validate(projectInfo);
-                if (assetProjectInfoValidator.ShouldBeProcessed(refDate, projectInfo)) res.ProjectsToProcess.Add(projectInfo);
+                assetProjectValidator.Validate(projectInfo);
+                if (assetProjectValidator.ShouldBeProcessed(refDate, projectInfo)) res.ProjectsToProcess.Add(projectInfo);
                 else res.DiscardedProjects.Add(projectInfo);
             }
             catch (Exception e)

@@ -1,5 +1,6 @@
 ﻿using AutoFixture;
 using AutoFixture.Xunit2;
+using DefectDojoJob.Models.Adapters;
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
@@ -25,7 +26,7 @@ public class ProcessProductTests
         defectDojoConnectorMock.DefaultSetup(product, metadata, productType);
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
 
-        var pi = (new Fixture()).Build<AssetProjectInfo>()
+        var pi = (new Fixture()).Build<AssetProject>()
             .Without(pi => pi.ApplicationOwner)
             .Without(pi => pi.FunctionalOwner)
             .Without(pi => pi.ApplicationOwnerBackUp)
@@ -33,7 +34,7 @@ public class ProcessProductTests
             .Without(pi => pi.State)
             .Without(pi => pi.NumberOfUsers)
             .Create();
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p =>
@@ -49,13 +50,13 @@ public class ProcessProductTests
     [Theory]
     [InlineAutoMoqData]
     public async Task WhenCreate_DirectValuesCorrectlyMapped(IConfiguration configuration,
-        AssetProjectInfo pi, ProductType productType, Product product, Metadata metadata,List<AssetToDefectDojoMapper> users)
+        AssetProject pi, ProductType productType, Product product, Metadata metadata,List<AssetToDefectDojoMapper> users)
     {
         var defectDojoConnectorMock = new MockDefectDojoConnector();
         defectDojoConnectorMock.DefaultSetup(product, metadata, productType);
 
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p =>
@@ -68,7 +69,7 @@ public class ProcessProductTests
     [Theory]
     [InlineAutoMoqData]
     public async Task WhenUserExist_ValueIsRetrieved(IConfiguration configuration,
-        AssetProjectInfo pi, string username, int userId, ProductType productType, Product product, Metadata metadata)
+        AssetProject pi, string username, int userId, ProductType productType, Product product, Metadata metadata)
 
     {
         //Arrange
@@ -79,10 +80,10 @@ public class ProcessProductTests
         pi.ApplicationOwnerBackUp = username;
         pi.FunctionalOwner = username;
 
-        var users = new List<AssetToDefectDojoMapper> { new(username, userId, EntityType.User) };
+        var users = new List<AssetToDefectDojoMapper> { new(username, userId, EntitiesType.User) };
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
         //Act
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.ProductManager == userId && p.TeamManager == userId && p.TechnicalContact == userId)));
@@ -91,7 +92,7 @@ public class ProcessProductTests
     [Theory]
     [InlineAutoMoqData]
     public async Task WhenUserNotFound_NullIsSent(IConfiguration configuration, Metadata metadata, Product product,
-        AssetProjectInfo pi, ProductType productType,List<AssetToDefectDojoMapper> users)
+        AssetProject pi, ProductType productType,List<AssetToDefectDojoMapper> users)
 
     {
         //Arrange
@@ -100,7 +101,7 @@ public class ProcessProductTests
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
         
         //Act
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         //Assert
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
@@ -112,7 +113,7 @@ public class ProcessProductTests
     [InlineAutoMoqData("")]
     [InlineAutoMoqData(" ")]
     public async Task WhenDescriptionNull_DefaultValueSent(string? desc, IConfiguration configuration,
-        AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, ProductType productType, Product product, Metadata metadata)
+        AssetProject pi, List<AssetToDefectDojoMapper> users, ProductType productType, Product product, Metadata metadata)
 
     {
         //Arrange
@@ -121,7 +122,7 @@ public class ProcessProductTests
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
 
         pi.ShortDescription = pi.DetailedDescription = desc;
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.Description == "Enter a description")));
@@ -135,7 +136,7 @@ public class ProcessProductTests
     [InlineAutoMoqData("abcdef", "")]
     [InlineAutoMoqData("abcdef", "  ")]
     public async Task WhenDescriptionNotNull_ConcatValueSent(string? shortDesc, string? detailedDesc,IConfiguration configuration,
-        AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, ProductType productType, Product product,Metadata metadata)
+        AssetProject pi, List<AssetToDefectDojoMapper> users, ProductType productType, Product product,Metadata metadata)
 
     {
         //Arrange
@@ -145,7 +146,7 @@ public class ProcessProductTests
 
         pi.ShortDescription = shortDesc;
         pi.DetailedDescription = detailedDesc;
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(
             It.Is<Product>(p => p.Description.Contains(shortDesc ?? "") && p.Description.Contains(detailedDesc ?? ""))));
@@ -154,13 +155,13 @@ public class ProcessProductTests
     [Theory]
     [AutoMoqData]
     public async Task WhenNoProductTypeFound_Error([Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock, DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        AssetProjectInfo pi, List<AssetToDefectDojoMapper> users)
+        AssetProject pi, List<AssetToDefectDojoMapper> users)
 
     {
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>()))
             .ReturnsAsync((ProductType?)null);
 
-        Func<Task> act = () => sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        Func<Task> act = () => sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
         await act.Should().ThrowAsync<Exception>().Where(e => e.Message.ToLower().Contains("no product type"));
     }
 
@@ -170,7 +171,7 @@ public class ProcessProductTests
     [InlineAutoMoqData("EnCoursDeDeclassement", Lifecycle.production)]
     [InlineAutoMoqData("Declassee", Lifecycle.retirement)]
     public async Task WhenStateIsValidLifeCycle_CorrectMatchingValueSent(string? state, Lifecycle expectedLifecycle, IConfiguration configuration,
-        AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, Product product, ProductType productType, Metadata metadata)
+        AssetProject pi, List<AssetToDefectDojoMapper> users, Product product, ProductType productType, Metadata metadata)
 
     {
         //Arrange
@@ -179,7 +180,7 @@ public class ProcessProductTests
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
 
         pi.State = state;
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(It.Is<Product>(p => p.Lifecycle == expectedLifecycle)));
     }
@@ -190,7 +191,7 @@ public class ProcessProductTests
     [InlineAutoMoqData("   ")]
     public async Task WhenStateIsInvalidLifeCycle_NullSent(string? state, 
       IConfiguration configuration, Metadata metadata,
-        AssetProjectInfo pi, List<AssetToDefectDojoMapper> users, Product product, ProductType productType)
+        AssetProject pi, List<AssetToDefectDojoMapper> users, Product product, ProductType productType)
 
     {
         //Arrange
@@ -199,7 +200,7 @@ public class ProcessProductTests
         var sut = new DefectDojoJob.Services.Processors.ProductsProcessor(configuration, defectDojoConnectorMock.Object);
 
         pi.State = state;
-        await sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Create);
+        await sut.ProcessProductAsync(pi, users, ProductAdapterAction.Create);
 
         defectDojoConnectorMock.Verify(m => m.CreateProductAsync(It.Is<Product>(p => p.Lifecycle == null)));
     }
@@ -210,12 +211,12 @@ public class ProcessProductTests
     public async Task WhenUpdateCallWithoutProductId_Error(ProductType productType,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
 
-        Func<Task> act = () => sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.Update);
-        await act.Should().ThrowAsync<ErrorAssetProjectInfoProcessor>()
+        Func<Task> act = () => sut.ProcessProductAsync(pi, users, ProductAdapterAction.Update);
+        await act.Should().ThrowAsync<ErrorAssetProjectProcessor>()
             .Where(e => e.Message.Contains("no productId"));
     }
 
@@ -224,11 +225,11 @@ public class ProcessProductTests
     public async Task WhenUpdateCallWithInvalidAction_Error(ProductType productType,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Processors.ProductsProcessor sut,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfo pi)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
         defectDojoConnectorMock.Setup(m => m.GetProductTypeByNameAsync(It.IsAny<string>())).ReturnsAsync(productType);
 
-        Func<Task> act = () => sut.ProcessProductAsync(pi, users, AssetProjectInfoProcessingAction.None);
+        Func<Task> act = () => sut.ProcessProductAsync(pi, users, ProductAdapterAction.None);
         await act.Should().ThrowAsync<ArgumentOutOfRangeException>()
             .Where(e => e.Message.Contains("Invalid action"));
     }

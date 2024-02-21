@@ -1,7 +1,10 @@
 using System.Net.Http.Headers;
 using DefectDojoJob;
-using DefectDojoJob.Models.Processor.Interfaces;
 using DefectDojoJob.Services;
+using DefectDojoJob.Services.Adapters;
+using DefectDojoJob.Services.DefectDojoConnectors;
+using DefectDojoJob.Services.Extractors;
+using DefectDojoJob.Services.InitialLoad;
 using DefectDojoJob.Services.Interfaces;
 using DefectDojoJob.Services.Processors;
 
@@ -20,11 +23,12 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<Worker>();
         services.AddHttpClient<IDefectDojoConnector,DefectDojoConnector>();
         services.AddTransient<InitialLoadService>();
-        services.AddTransient<IEntitiesExtractor,EntitiesExtractor>();
-        services.AddTransient<IProductsProcessor,ProductsProcessor>();
+        services.AddTransient<IUsersAdapter,UsersAdapter>();
+        services.AddTransient<IUsersExtractor,UsersExtractor>();
         services.AddTransient<IUsersProcessor,UsersProcessor>();
-        services.AddTransient<AssetProjectInfoProcessor>();
-        services.AddSingleton<IAssetProjectInfoValidator,AssetProjectInfoValidator>();
+        services.AddTransient<IProductsProcessor,ProductsProcessor>();
+        services.AddTransient<AssetProjectsProcessor>();
+        services.AddSingleton<IAssetProjectValidator,AssetProjectValidator>();
         services.AddLogging(o => { o.AddConsole(); });
     })
     .Build();

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using DefectDojoJob.Models.Adapters;
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
@@ -20,7 +21,7 @@ public class ProductsProcessor : IProductsProcessor
         this.defectDojoConnector = defectDojoConnector;
     }
 
-    public async Task<List<ProductProcessingResult>> ProcessProductsAsync(List<AssetProjectInfo> projects,
+    public async Task<List<ProductProcessingResult>> ProcessProductsAsync(List<AssetProject> projects,
         List<AssetToDefectDojoMapper> users)
     {
         var result = new List<ProductProcessingResult>();
@@ -32,16 +33,16 @@ public class ProductsProcessor : IProductsProcessor
                 var productId = await ExistingProjectAsync(project);
                 res = productId switch
                 {
-                    null => await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Create),
-                    not null => await ProcessProductAsync(project, users, AssetProjectInfoProcessingAction.Update, productId)
+                    null => await ProcessProductAsync(project, users, ProductAdapterAction.Create),
+                    not null => await ProcessProductAsync(project, users, ProductAdapterAction.Update, productId)
                 };
             }
             catch (Exception e)
             {
-                if (e is WarningAssetProjectInfoProcessor warning) res.Warnings.Add(warning);
+                if (e is WarningAssetProjectProcessor warning) res.Warnings.Add(warning);
                 else
                 {
-                    res.Errors.Add(new ErrorAssetProjectInfoProcessor(e.Message, project.Code, EntityType.Product));
+                    res.Errors.Add(new ErrorAssetProjectProcessor(e.Message, project.Code, EntitiesType.Product));
                 }
             }
 
@@ -51,7 +52,7 @@ public class ProductsProcessor : IProductsProcessor
         return result;
     }
 
-    private async Task<int?> ExistingProjectAsync(AssetProjectInfo project)
+    private async Task<int?> ExistingProjectAsync(AssetProject project)
     {
         var searchParams = new Dictionary<string, string>
         {
@@ -73,32 +74,32 @@ public class ProductsProcessor : IProductsProcessor
     {
         const string errorMessage = "Mismatch Code and Name -";
         if (metadata == null && product != null)
-            throw new ErrorAssetProjectInfoProcessor($"{errorMessage} Product '{name}' has been found but no code '{code}' linked to it",
-                code, EntityType.Product);
+            throw new ErrorAssetProjectProcessor($"{errorMessage} Product '{name}' has been found but no code '{code}' linked to it",
+                code, EntitiesType.Product);
         if (metadata != null && product == null)
-            throw new ErrorAssetProjectInfoProcessor($"{errorMessage} Code '{code}' has been found but no product '{name}' linked to it",
-                code, EntityType.Product);
+            throw new ErrorAssetProjectProcessor($"{errorMessage} Code '{code}' has been found but no product '{name}' linked to it",
+                code, EntitiesType.Product);
         if (metadata?.Product != product?.Id)
-            throw new ErrorAssetProjectInfoProcessor($"{errorMessage} Code {code} and product '{name}' have been found but are not linked together in defect dojo",
-                code, EntityType.Product);
+            throw new ErrorAssetProjectProcessor($"{errorMessage} Code {code} and product '{name}' have been found but are not linked together in defect dojo",
+                code, EntitiesType.Product);
     }
 
-    public async Task<ProductProcessingResult> ProcessProductAsync(AssetProjectInfo projectInfo,
-        List<AssetToDefectDojoMapper> users, AssetProjectInfoProcessingAction requiredAction, int? productId = null)
+    public async Task<ProductProcessingResult> ProcessProductAsync(AssetProject project,
+        List<AssetToDefectDojoMapper> users, ProductAdapterAction requiredAction, int? productId = null)
     {
         ProductProcessingResult result;
-        var productType = await GetProductTypeAsync(projectInfo.ProductType, projectInfo.Code);
-        var product = ConstructProductFromProject(projectInfo, productType, users);
+        var productType = await GetProductTypeAsync(project.ProductType, project.Code);
+        var product = ConstructProductFromProject(project, productType, users);
 
         switch (requiredAction)
         {
-            case AssetProjectInfoProcessingAction.Create:
-                result = await CreateProjectInfoAsync(product, projectInfo);
+            case ProductAdapterAction.Create:
+                result = await CreateProjectInfoAsync(product, project);
                 break;
-            case AssetProjectInfoProcessingAction.Update:
-                result = await UpdateProjectInfoAsync(product, productId, projectInfo.Code);
+            case ProductAdapterAction.Update:
+                result = await UpdateProjectInfoAsync(product, productId, project.Code);
                 break;
-            case AssetProjectInfoProcessingAction.None:
+            case ProductAdapterAction.None:
             default:
                 throw new ArgumentOutOfRangeException(nameof(requiredAction), requiredAction, "Invalid action required on the product");
         }
@@ -111,17 +112,17 @@ public class ProductsProcessor : IProductsProcessor
         var res = new ProductProcessingResult();
         if (productId == null)
         {
-            throw new ErrorAssetProjectInfoProcessor(
-                "Update product requested but no productId found or provided", product.Name, EntityType.Product);
+            throw new ErrorAssetProjectProcessor(
+                "Update product requested but no productId found or provided", product.Name, EntitiesType.Product);
         }
             
         product.Id = (int)productId;
         var updateRes = await defectDojoConnector.UpdateProductAsync(product);
-        res.Entity = new AssetToDefectDojoMapper(code, updateRes.Id, EntityType.Product);
+        res.Entity = new AssetToDefectDojoMapper(code, updateRes.Id, EntitiesType.Product);
         return res;
     }
 
-    private async Task<ProductProcessingResult> CreateProjectInfoAsync(Product product, AssetProjectInfo pi)
+    private async Task<ProductProcessingResult> CreateProjectInfoAsync(Product product, AssetProject pi)
     {
         var res = new ProductProcessingResult();
         var createRes = await defectDojoConnector.CreateProductAsync(product);
@@ -138,11 +139,11 @@ public class ProductsProcessor : IProductsProcessor
         {
             if (await defectDojoConnector.DeleteProductAsync(createRes.Id))
             {
-                res.Errors.Add(new ErrorAssetProjectInfoProcessor($"Metadata with AssetCode could not be created; Compensation successful- Product with Id '{createRes.Id}' with code {pi.Code} has been deleted",
-                    pi.Code,EntityType.Product));
+                res.Errors.Add(new ErrorAssetProjectProcessor($"Metadata with AssetCode could not be created; Compensation successful- Product with Id '{createRes.Id}' with code {pi.Code} has been deleted",
+                    pi.Code,EntitiesType.Product));
             }
-            res.Errors.Add(new ErrorAssetProjectInfoProcessor($"Metadata with AssetCode could not be created; Compensation has failed - Product with Id '{createRes.Id}' with code {pi.Code} could not be deleted.PLease clean DefectDojo manually",
-                pi.Code,EntityType.Product));
+            res.Errors.Add(new ErrorAssetProjectProcessor($"Metadata with AssetCode could not be created; Compensation has failed - Product with Id '{createRes.Id}' with code {pi.Code} could not be deleted.PLease clean DefectDojo manually",
+                pi.Code,EntitiesType.Product));
         }
 
         return res;
@@ -158,25 +159,25 @@ public class ProductsProcessor : IProductsProcessor
         };
     }
 
-    private static Product ConstructProductFromProject(AssetProjectInfo projectInfo, int productType, List<AssetToDefectDojoMapper> users)
+    private static Product ConstructProductFromProject(AssetProject project, int productType, List<AssetToDefectDojoMapper> users)
     {
-        return new Product(projectInfo.Name, SetDescription(projectInfo))
+        return new Product(project.Name, SetDescription(project))
         {
             ProductTypeId = productType,
-            Lifecycle = GetLifeCycle(projectInfo.State),
-            TechnicalContact = GetUser(projectInfo, nameof(projectInfo.ApplicationOwner), users),
-            TeamManager = GetUser(projectInfo, nameof(projectInfo.ApplicationOwnerBackUp), users),
-            ProductManager = GetUser(projectInfo, nameof(projectInfo.FunctionalOwner), users),
-            UserRecords = projectInfo.NumberOfUsers,
-            ExternalAudience = projectInfo.OpenToPartner ?? false
+            Lifecycle = GetLifeCycle(project.State),
+            TechnicalContact = GetUser(project, nameof(project.ApplicationOwner), users),
+            TeamManager = GetUser(project, nameof(project.ApplicationOwnerBackUp), users),
+            ProductManager = GetUser(project, nameof(project.FunctionalOwner), users),
+            UserRecords = project.NumberOfUsers,
+            ExternalAudience = project.OpenToPartner ?? false
         };
     }
 
-    private static string SetDescription(AssetProjectInfo projectInfo)
+    private static string SetDescription(AssetProject project)
     {
-        return string.IsNullOrEmpty(projectInfo.ShortDescription?.Trim()) && string.IsNullOrEmpty(projectInfo.DetailedDescription?.Trim())
+        return string.IsNullOrEmpty(project.ShortDescription?.Trim()) && string.IsNullOrEmpty(project.DetailedDescription?.Trim())
             ? DefaultDescription
-            : $"Short Description : {projectInfo.ShortDescription ?? "/"}; Detailed Description : {projectInfo.DetailedDescription ?? "/"} ; ";
+            : $"Short Description : {project.ShortDescription ?? "/"}; Detailed Description : {project.DetailedDescription ?? "/"} ; ";
     }
 
     private async Task<int> GetProductTypeAsync(string? providedProductType, string assetIdentifier)
@@ -184,17 +185,17 @@ public class ProductsProcessor : IProductsProcessor
         var defaultType = configuration["ProductType"];
 
         if (string.IsNullOrEmpty(providedProductType) && string.IsNullOrEmpty(defaultType))
-            throw new ErrorAssetProjectInfoProcessor(
-                "no product type provided and none found in the configuration file", assetIdentifier, EntityType.Product);
+            throw new ErrorAssetProjectProcessor(
+                "no product type provided and none found in the configuration file", assetIdentifier, EntitiesType.Product);
 
         ProductType? res;
         if (!string.IsNullOrEmpty(providedProductType)) res = await defectDojoConnector.GetProductTypeByNameAsync(providedProductType);
         else res = await defectDojoConnector.GetProductTypeByNameAsync(defaultType!);
 
         return res?.Id ??
-               throw new ErrorAssetProjectInfoProcessor(
+               throw new ErrorAssetProjectProcessor(
                    $"No product type was found, neither with the provided type nor with the default type",
-                   assetIdentifier, EntityType.Product);
+                   assetIdentifier, EntitiesType.Product);
     }
 
     private static Lifecycle? GetLifeCycle(string? state)
@@ -211,7 +212,7 @@ public class ProductsProcessor : IProductsProcessor
         }
     }
 
-    private static int? GetUser(AssetProjectInfo pi, string propertyName, List<AssetToDefectDojoMapper> users)
+    private static int? GetUser(AssetProject pi, string propertyName, List<AssetToDefectDojoMapper> users)
     {
         return users
             .Find(u => u.AssetIdentifier == (string)(pi.GetType().GetProperty(propertyName)?.GetValue(pi) ?? ""))
