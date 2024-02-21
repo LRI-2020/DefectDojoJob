@@ -15,7 +15,7 @@ public class GetDefectDojoUserByUsernameAsyncTests
     public async Task WhenGetUserByUsername_URiIsCorrect(IConfiguration configuration, string name)
     {
         //Arrange
-        var res = new User { UserName = name };
+        var res = new User(name);
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
@@ -55,7 +55,7 @@ public class GetDefectDojoUserByUsernameAsyncTests
 
         //Act
         var actualRes = await sut.GetDefectDojoUserByUsernameAsync(name);
-        var expectedRes = new User() { Id = 1, UserName = name };
+        var expectedRes = new User(name) { Id = 1};
 
         //Assert
         actualRes.Should().BeEquivalentTo(expectedRes);
@@ -66,7 +66,7 @@ public class GetDefectDojoUserByUsernameAsyncTests
     public async Task WhenStatusUnsuccessful_ErrorThrown(IConfiguration configuration, string name)
     {
         //Arrange
-        var res = new User { UserName = name };
+        var res = new User(name);
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Forbidden, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
