@@ -14,3 +14,6 @@ global using DefectDojoJob.Tests.AutoDataAttribute;
 global using DefectDojoJob.Tests.Tests.Shared;
 global using FluentAssertions;
 global using Moq;
+global using AutoFixture;
+global using DefectDojoJob.Services;
+global using Microsoft.Extensions.Configuration;

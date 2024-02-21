@@ -23,8 +23,6 @@ public class ProductExtractor:IProductExtractor
         return ConstructProductFromProject(project, productType, users);
     }
     
-
-    
     private async Task<int> GetProductTypeAsync(string? providedProductType, string assetIdentifier)
     {
         var defaultType = configuration["ProductType"];
@@ -85,10 +83,4 @@ public class ProductExtractor:IProductExtractor
             ?.DefectDojoId;
     }
     
-}
-
-public interface IProductExtractor
-{
-    public Task<Product> ExtractProduct(AssetProject project, List<AssetToDefectDojoMapper> users);
-
 }
