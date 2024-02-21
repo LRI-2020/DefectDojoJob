@@ -37,10 +37,8 @@ public class ProductsProcessor : IProductsProcessor
                         "Update product requested but no productId found or provided", product.Name, EntitiesType.Product);
                     res.Entity = await UpdateProjectInfoAsync(product, project.Code);
                     break;
-                case ProductAdapterAction.None:
-                    break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(action), action, null);
+                    throw new ErrorAssetProjectProcessor($"Invalid action requested {nameof(action)}",project.Code,EntitiesType.Product);
             }
         }
         catch (Exception e)

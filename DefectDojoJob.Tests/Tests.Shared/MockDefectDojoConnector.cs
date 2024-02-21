@@ -27,6 +27,13 @@ public class MockDefectDojoConnector:Mock<IDefectDojoConnector>
         Setup(m 
             => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(output);
         return this;
+    }     
+    
+    public MockDefectDojoConnector MockUpdateProductAsync(Product output)
+    {
+        Setup(m 
+            => m.UpdateProductAsync(It.IsAny<Product>())).ReturnsAsync(output);
+        return this;
     }   
     
     public MockDefectDojoConnector MockCreateMetadataAsync(Metadata output)
@@ -50,6 +57,7 @@ public class MockDefectDojoConnector:Mock<IDefectDojoConnector>
         MockGetProductTypeByNameAsync(productType);
         MockCreateProductAsync(product);
         MockGetMetadataAsync(metadata);
+        MockUpdateProductAsync(product);
         return this;
     }
     

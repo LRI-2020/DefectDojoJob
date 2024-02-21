@@ -6,7 +6,7 @@ using FluentAssertions;
 
 namespace DefectDojoJob.Tests.Services.Tests.Extractors.Tests;
 
-public class EntitiesExtractorTests
+public class UsersExtractorTests
 {
     [Theory]
     [AutoMoqData]
