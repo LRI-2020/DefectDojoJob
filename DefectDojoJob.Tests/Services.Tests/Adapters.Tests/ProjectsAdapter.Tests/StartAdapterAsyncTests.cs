@@ -1,4 +1,4 @@
-﻿namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProductsAdapter.Tests;
+﻿namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProjectsAdapter.Tests;
 
 public class StartAdapterAsyncTests
 {
@@ -12,7 +12,6 @@ public class StartAdapterAsyncTests
     public void WhenErrorOccurred_ErrorAddedToResult()
     {
                 throw new NotImplementedException();
-
     }
 
     [Fact]

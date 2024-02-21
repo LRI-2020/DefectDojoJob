@@ -12,7 +12,6 @@ public class ProductsProcessor : IProductsProcessor
 {
     private readonly IDefectDojoConnector defectDojoConnector;
     private readonly IProductExtractor productExtractor;
-    private const string CodeMetadataName = "AssetCode";
 
     public ProductsProcessor(IDefectDojoConnector defectDojoConnector, IProductExtractor productExtractor)
     {
@@ -38,6 +37,10 @@ public class ProductsProcessor : IProductsProcessor
                         "Update product requested but no productId found or provided", product.Name, EntitiesType.Product);
                     res.Entity = await UpdateProjectInfoAsync(product, project.Code);
                     break;
+                case ProductAdapterAction.None:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(action), action, null);
             }
         }
         catch (Exception e)
