@@ -1,1 +1,16 @@
 global using Xunit;
+global using DefectDojoJob.Models.DefectDojo;
+global using DefectDojoJob.Services.Adapters;
+global using DefectDojoJob.Tests.AutoDataAttribute;
+global using AutoFixture.Xunit2;
+global using DefectDojoJob.Models.Adapters;
+global using DefectDojoJob.Models.DefectDojo;
+global using DefectDojoJob.Models.Processor;
+global using DefectDojoJob.Models.Processor.Errors;
+global using DefectDojoJob.Services.Extractors;
+global using DefectDojoJob.Services.Interfaces;
+global using DefectDojoJob.Services.Processors;
+global using DefectDojoJob.Tests.AutoDataAttribute;
+global using DefectDojoJob.Tests.Tests.Shared;
+global using FluentAssertions;
+global using Moq;

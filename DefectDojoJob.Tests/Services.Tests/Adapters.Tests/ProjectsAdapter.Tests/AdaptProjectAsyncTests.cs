@@ -1,15 +1,4 @@
-﻿using AutoFixture.Xunit2;
-using DefectDojoJob.Models.Adapters;
-using DefectDojoJob.Models.DefectDojo;
-using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Models.Processor.Errors;
-using DefectDojoJob.Services.Interfaces;
-using DefectDojoJob.Tests.AutoDataAttribute;
-using DefectDojoJob.Tests.Tests.Shared;
-using FluentAssertions;
-using Moq;
-
-namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProjectsAdapter.Tests;
+﻿namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProjectsAdapter.Tests;
 
 public class AdaptProjectAsyncTests
 {
@@ -50,7 +39,7 @@ public class AdaptProjectAsyncTests
     public async Task WhenMetadataAndProductIdDifferent_ErrorThrown(Product productRes, Metadata metadataRes,
         [Frozen] Mock<IDefectDojoConnector> defectDojoConnectorMock,
         DefectDojoJob.Services.Adapters.ProjectsAdapter sut,
-        List<AssetToDefectDojoMapper> users, AssetProject pi, string name)
+        List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
         metadataRes.Product = 1;
         productRes.Id = 2;

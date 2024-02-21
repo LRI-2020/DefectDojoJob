@@ -42,8 +42,3 @@ public class MetadataProcessor:IMetadataProcessor
     }
     
 }
-
-public interface IMetadataProcessor
-{
-    public Task<MetadataProcessingResult> ProcessProjectMetadata(AssetProject project);
-}

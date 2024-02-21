@@ -1,6 +1,5 @@
 ﻿using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Results;
-using DefectDojoJob.Services.Adapters;
 using DefectDojoJob.Services.Interfaces;
 
 namespace DefectDojoJob.Services.Processors;

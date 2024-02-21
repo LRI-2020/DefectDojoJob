@@ -1,7 +1,7 @@
 ﻿using DefectDojoJob.Models.Adapters;
 using DefectDojoJob.Models.Processor;
 
-namespace DefectDojoJob.Services.Adapters;
+namespace DefectDojoJob.Services.Interfaces;
 
 public interface IProjectsAdapter
 {
