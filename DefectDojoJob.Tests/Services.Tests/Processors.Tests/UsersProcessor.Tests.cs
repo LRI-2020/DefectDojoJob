@@ -1,14 +1,4 @@
-﻿using AutoFixture;
-using AutoFixture.Xunit2;
-using DefectDojoJob.Models.DefectDojo;
-using DefectDojoJob.Models.Processor.Errors;
-using DefectDojoJob.Services.Interfaces;
-using DefectDojoJob.Services.Processors;
-using DefectDojoJob.Tests.AutoDataAttribute;
-using FluentAssertions;
-using Moq;
-
-namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests;
+﻿namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests;
 
 public class UsersProcessorTests
 {

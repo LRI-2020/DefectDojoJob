@@ -1,5 +1,4 @@
-﻿using AutoFixture;
-using DefectDojoJob.Models.Processor.Results;
+﻿using DefectDojoJob.Models.Processor.Results;
 
 namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProjectsAdapter.Tests;
 

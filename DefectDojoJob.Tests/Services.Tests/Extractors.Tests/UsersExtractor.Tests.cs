@@ -1,10 +1,4 @@
-﻿using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Services.Adapters;
-using DefectDojoJob.Services.Extractors;
-using DefectDojoJob.Tests.AutoDataAttribute;
-using FluentAssertions;
-
-namespace DefectDojoJob.Tests.Services.Tests.Extractors.Tests;
+﻿namespace DefectDojoJob.Tests.Services.Tests.Extractors.Tests;
 
 public class UsersExtractorTests
 {

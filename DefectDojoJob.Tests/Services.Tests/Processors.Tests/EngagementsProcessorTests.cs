@@ -1,10 +1,9 @@
 ﻿namespace DefectDojoJob.Tests.Services.Tests.Processors.Tests;
 
-public class GroupsProcessorTests
+public class EngagementsProcessorTests
 {
     [Fact]
-    public void test()
-    {
+    public void test(){
         throw new NotImplementedException();
     }
 }

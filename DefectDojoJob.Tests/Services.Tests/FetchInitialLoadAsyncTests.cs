@@ -1,13 +1,6 @@
 using System.Net;
-using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Services;
 using DefectDojoJob.Services.InitialLoad;
-using DefectDojoJob.Services.Interfaces;
-using DefectDojoJob.Tests.AutoDataAttribute;
 using DefectDojoJob.Tests.Helpers.Tests;
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using Moq;
 
 namespace DefectDojoJob.Tests.Services.Tests;
 

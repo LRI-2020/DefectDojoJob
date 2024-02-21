@@ -1,10 +1,5 @@
 ﻿using System.Net;
-using DefectDojoJob.Models.DefectDojo;
-using DefectDojoJob.Services;
-using DefectDojoJob.Tests.AutoDataAttribute;
 using DefectDojoJob.Tests.Helpers.Tests;
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

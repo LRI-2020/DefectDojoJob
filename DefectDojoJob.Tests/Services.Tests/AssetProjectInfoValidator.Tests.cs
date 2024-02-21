@@ -1,8 +1,4 @@
-﻿using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Services;
-using DefectDojoJob.Services.InitialLoad;
-using DefectDojoJob.Tests.AutoDataAttribute;
-using FluentAssertions;
+﻿using DefectDojoJob.Services.InitialLoad;
 
 namespace DefectDojoJob.Tests.Services.Tests;
 

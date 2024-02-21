@@ -1,11 +1,4 @@
-﻿using AutoFixture.Xunit2;
-using DefectDojoJob.Models.Processor;
-using DefectDojoJob.Services.Adapters;
-using DefectDojoJob.Services.Interfaces;
-using DefectDojoJob.Tests.AutoDataAttribute;
-using Moq;
-
-namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests;
+﻿namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests;
 
 public class UsersAdapterTests
 {
