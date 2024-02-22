@@ -1,4 +1,7 @@
-﻿namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProjectsAdapter.Tests;
+﻿using System.Globalization;
+using DefectDojoJob.Models.Processor.Results;
+
+namespace DefectDojoJob.Tests.Services.Tests.Adapters.Tests.ProjectsAdapter.Tests;
 
 public class AdaptProjectAsyncTests
 {
@@ -57,15 +60,18 @@ public class AdaptProjectAsyncTests
     [Theory]
     [AutoMoqData]
     public async Task WhenExistingProject_UpdateIsCalled(Product product, Metadata metadata, ProductType productType,
-        Mock<IProductsProcessor> productsProcessorMock,
-        List<AssetToDefectDojoMapper> users, AssetProject pi)
+        Mock<IProductsProcessor> productsProcessorMock, List<AssetToDefectDojoMapper> users, 
+        AssetProject pi, Mock<IMetadataProcessor> metadataProcessorMock, ProductProcessingResult processingResult)
     {
-        throw new NotImplementedException();
         metadata.Product = 1;
         product.Id = 1;
         var defectDojoConnectorMock = new MockDefectDojoConnector().DefaultUpdateSetup(product, metadata, productType);
-    //    var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object);
-      //  await sut.AdaptProjectAsync(pi, users);
+        productsProcessorMock.Setup(m => m.ProcessProductAsync(pi, users, ProductAdapterAction.Update, It.IsAny<int>()))
+            .ReturnsAsync(processingResult);
+        
+        var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object, 
+            metadataProcessorMock.Object);
+      await sut.AdaptProjectAsync(pi, users);
 
         productsProcessorMock.Verify(m => m.ProcessProductAsync(It.IsAny<AssetProject>(),
             It.IsAny<List<AssetToDefectDojoMapper>>(), ProductAdapterAction.Update,
@@ -74,17 +80,17 @@ public class AdaptProjectAsyncTests
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenNotExistingProject_CreateIsCalled(ProductType productType,
-        Product product,
-        Metadata metadata,
-        Mock<IProductsProcessor> productsProcessorMock,
-        List<AssetToDefectDojoMapper> users, AssetProject pi)
+    public async Task WhenNotExistingProject_CreateIsCalled(ProductType productType, Product product, Metadata metadata,
+        Mock<IProductsProcessor> productsProcessorMock, List<AssetToDefectDojoMapper> users, AssetProject pi,
+        IMetadataProcessor metadataProcessor, ProductProcessingResult processingResult)
     {
-        throw new NotImplementedException();
-
+        productsProcessorMock.Setup(m => m.ProcessProductAsync(pi, users, ProductAdapterAction.Create, It.IsAny<int?>()))
+            .ReturnsAsync(processingResult);
         var defectDojoConnectorMock = new MockDefectDojoConnector().DefaultCreateSetup(product, metadata, productType);
-       // var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object);
-        //await sut.AdaptProjectAsync(pi, users);
+        var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object, metadataProcessor);
+       
+        await sut.AdaptProjectAsync(pi, users);
+        
         productsProcessorMock.Verify(m => m.ProcessProductAsync(It.IsAny<AssetProject>(),
             It.IsAny<List<AssetToDefectDojoMapper>>(), ProductAdapterAction.Create,null), Times.Once);
     }
