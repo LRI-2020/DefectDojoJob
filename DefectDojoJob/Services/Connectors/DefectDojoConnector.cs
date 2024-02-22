@@ -8,7 +8,7 @@ using DefectDojoJob.Services.Interfaces;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DefectDojoJob.Services.DefectDojoConnectors;
+namespace DefectDojoJob.Services.Connectors;
 
 public class DefectDojoConnector : IDefectDojoConnector
 {
@@ -54,8 +54,8 @@ public class DefectDojoConnector : IDefectDojoConnector
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while creating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
 
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
-               throw new Exception($"New Product '{product.Name}' could not be retrieved");
+        return  DefectDojoApiDeserializer<Product>.DeserializeSingleItem(await response.Content.ReadAsStringAsync(),
+            $"New Product '{product.Name}' could not be retrieved");
     }
 
     public async Task<Metadata?> GetMetadataAsync(Dictionary<string, string> searchParams)
@@ -94,27 +94,21 @@ public class DefectDojoConnector : IDefectDojoConnector
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while updating the Project. Status code : {(int)response.StatusCode} - {response.StatusCode}");
 
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Product>() ??
-               throw new Exception($"Updated Product '{product.Name}' could not be retrieved");
+        return DefectDojoApiDeserializer<Product>.DeserializeSingleItem(await response.Content.ReadAsStringAsync(),
+            $"Updated Product '{product.Name}' could not be retrieved");
     }
 
     public async Task<Metadata> CreateMetadataAsync(Metadata metadata)
     {
-        var body = new
-        {
-            name = metadata.Name,
-            value = metadata.Value,
-            product = metadata.Product
-        };
+        var content = GenerateMetadataRequestContent(metadata, Encoding.UTF8, "application/json");
 
-        var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
         var response = await httpClient.PostAsync("metadata/", content);
 
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while creating the Metadata. Status code : {(int)response.StatusCode} - {response.StatusCode}");
-
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Metadata>() ??
-               throw new Exception($"New Metadata '{metadata.Name}' could not be retrieved");
+        
+        return DefectDojoApiDeserializer<Metadata>.DeserializeSingleItem(await response.Content.ReadAsStringAsync(),
+            $"New Metadata '{metadata.Name}' could not be retrieved");
     }
 
     public async Task<bool> DeleteProductAsync(int productId)
@@ -125,7 +119,7 @@ public class DefectDojoConnector : IDefectDojoConnector
 
     public async Task<Metadata> UpdateMetadataAsync(Metadata metadata)
     {
-        var content = GenerateMetadataBody(metadata, Encoding.UTF8, "application/json");
+        var content = GenerateMetadataRequestContent(metadata, Encoding.UTF8, "application/json");
         var response = await httpClient.PutAsync($"metadata/{metadata.Id}", content);
         if ((int)response.StatusCode == 404)
             throw new Exception(
@@ -133,11 +127,11 @@ public class DefectDojoConnector : IDefectDojoConnector
         if (!response.IsSuccessStatusCode)
             throw new Exception($"Error while updating the metadata. Status code : {(int)response.StatusCode} - {response.StatusCode}");
 
-        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Metadata>() ??
-               throw new Exception($"Updated Metadata '{metadata.Name}' linked to product id '{metadata.Product}' could not be retrieved");
+        return DefectDojoApiDeserializer<Metadata>.DeserializeSingleItem(await response.Content.ReadAsStringAsync(),
+            $"Updated Metadata '{metadata.Name}' linked to product id '{metadata.Product}' could not be retrieved");
     }
 
-    private static HttpContent GenerateMetadataBody(Metadata metadata, Encoding encoding, string mediaType)
+    private static HttpContent GenerateMetadataRequestContent(Metadata metadata, Encoding encoding, string mediaType)
     {
         var body = new
         {

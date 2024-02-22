@@ -1,6 +1,6 @@
 using DefectDojoJob;
 using DefectDojoJob.Services.Adapters;
-using DefectDojoJob.Services.DefectDojoConnectors;
+using DefectDojoJob.Services.Connectors;
 using DefectDojoJob.Services.Extractors;
 using DefectDojoJob.Services.InitialLoad;
 using DefectDojoJob.Services.Interfaces;

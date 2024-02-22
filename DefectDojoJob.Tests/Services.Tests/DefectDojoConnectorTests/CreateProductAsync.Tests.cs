@@ -3,7 +3,7 @@ using DefectDojoJob.Tests.Helpers.Tests;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnector.Tests;
+namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnectorTests;
 
 public class CreateProductAsyncTests
 {
@@ -16,7 +16,7 @@ public class CreateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.Connectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         await sut.CreateProductAsync(res);
@@ -37,7 +37,7 @@ public class CreateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.Connectors.DefectDojoConnector(configuration, httpClient);
 
         var productToCreate = new Product(name, description)
         {
@@ -53,22 +53,17 @@ public class CreateProductAsyncTests
         await sut.CreateProductAsync(productToCreate);
 
         //Assert
-        var expectedBody = new
-        {
-            name,
-            description,
-            prod_type = 1,
-            technical_contact = 2,
-            team_manager = 3,
-            product_manager = 4,
-            user_records = 5,
-            external_audience = true,
-            lifecycle = Lifecycle.construction
-        };
 
-        var actualBody = JsonConvert.DeserializeObject(fakeHttpHandler.RequestBody ?? "");
-        var expected = JObject.Parse(JsonConvert.SerializeObject(expectedBody));
-        actualBody.Should().BeEquivalentTo(expected);
+        var actualBody = JObject.Parse(fakeHttpHandler.RequestBody ?? "");
+        ((string?)actualBody["name"]).Should().Be(name);
+        ((string?)actualBody["description"]).Should().Be(description);
+        ((int?)actualBody["prod_type"]).Should().Be(1);
+        ((int?)actualBody["technical_contact"]).Should().Be(2);
+        ((int?)actualBody["team_manager"]).Should().Be(3);
+        ((int?)actualBody["product_manager"]).Should().Be(4);
+        ((int?)actualBody["user_records"]).Should().Be(5);
+        ((bool?)actualBody["external_audience"]).Should().Be(true);
+        ((string?)actualBody["lifecycle"]).Should().Be(Lifecycle.construction.ToString());
     }
 
     [Theory]
@@ -80,7 +75,7 @@ public class CreateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.Connectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         var actualRes = await sut.CreateProductAsync(res);
@@ -97,7 +92,7 @@ public class CreateProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Forbidden, JsonConvert.SerializeObject(res));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.Connectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         Func<Task> act = () => sut.CreateProductAsync(res);
@@ -106,5 +101,20 @@ public class CreateProductAsyncTests
         await act.Should().ThrowAsync<Exception>()
             .Where(e => e.Message.Contains("Error while creating the Project")
                         && e.Message.Contains(HttpStatusCode.Forbidden.ToString()));
+    }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenResCannotBeParsed_ErrorThrown(IConfiguration configuration, Product product)
+    {
+        var fakeHttpMessageHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted);
+        var httpClient = new HttpClient(fakeHttpMessageHandler);
+        httpClient.BaseAddress = new Uri("https://test.be");
+        var sut = new DefectDojoJob.Services.Connectors.DefectDojoConnector(configuration, httpClient);
+
+        Func<Task> act = ()=> sut.CreateProductAsync(product);
+
+        await act.Should().ThrowAsync<Exception>()
+            .Where(e => e.Message.Contains($"New Product '{product.Name}' could not be retrieved"));
     }
 }

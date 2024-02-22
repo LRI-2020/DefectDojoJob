@@ -14,7 +14,7 @@ public class DeleteProductAsyncTests
         var fakeHttpHandler = TestHelper.GetFakeHandler(HttpStatusCode.Accepted, JsonConvert.SerializeObject(""));
         var httpClient = new HttpClient(fakeHttpHandler);
         httpClient.BaseAddress = new Uri("https://test.be");
-        var sut = new DefectDojoJob.Services.DefectDojoConnectors.DefectDojoConnector(configuration, httpClient);
+        var sut = new DefectDojoJob.Services.Connectors.DefectDojoConnector(configuration, httpClient);
 
         //Act
         await sut.DeleteProductAsync(id);
