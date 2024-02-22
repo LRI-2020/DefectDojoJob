@@ -60,11 +60,12 @@ public class AdaptProjectAsyncTests
         Mock<IProductsProcessor> productsProcessorMock,
         List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
+        throw new NotImplementedException();
         metadata.Product = 1;
         product.Id = 1;
         var defectDojoConnectorMock = new MockDefectDojoConnector().DefaultUpdateSetup(product, metadata, productType);
-        var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object);
-        await sut.AdaptProjectAsync(pi, users);
+    //    var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object);
+      //  await sut.AdaptProjectAsync(pi, users);
 
         productsProcessorMock.Verify(m => m.ProcessProductAsync(It.IsAny<AssetProject>(),
             It.IsAny<List<AssetToDefectDojoMapper>>(), ProductAdapterAction.Update,
@@ -79,10 +80,11 @@ public class AdaptProjectAsyncTests
         Mock<IProductsProcessor> productsProcessorMock,
         List<AssetToDefectDojoMapper> users, AssetProject pi)
     {
+        throw new NotImplementedException();
 
         var defectDojoConnectorMock = new MockDefectDojoConnector().DefaultCreateSetup(product, metadata, productType);
-        var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object);
-        await sut.AdaptProjectAsync(pi, users);
+       // var sut = new DefectDojoJob.Services.Adapters.ProjectsAdapter(productsProcessorMock.Object,defectDojoConnectorMock.Object);
+        //await sut.AdaptProjectAsync(pi, users);
         productsProcessorMock.Verify(m => m.ProcessProductAsync(It.IsAny<AssetProject>(),
             It.IsAny<List<AssetToDefectDojoMapper>>(), ProductAdapterAction.Create,null), Times.Once);
     }
