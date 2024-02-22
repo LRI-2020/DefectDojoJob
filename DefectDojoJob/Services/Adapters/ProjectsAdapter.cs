@@ -50,8 +50,10 @@ public class ProjectsAdapter : IProjectsAdapter
         var actionNeeded = productId != null ? ProductAdapterAction.Update : ProductAdapterAction.Create;
         result.ProductResult = await productsProcessor.ProcessProductAsync(project, users, actionNeeded, productId);
         var product = result.ProductResult.Entity;
+        
         if(product != null)
             result.MetadataResults = await metadataProcessor.ProcessProjectMetadataAsync(project, actionNeeded, product.DefectDojoId);
+        
         //Engagements
         //Endpoints
         //ProductGroup

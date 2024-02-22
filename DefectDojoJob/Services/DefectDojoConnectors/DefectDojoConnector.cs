@@ -123,6 +123,32 @@ public class DefectDojoConnector : IDefectDojoConnector
         return response.IsSuccessStatusCode;
     }
 
+    public async Task<Metadata> UpdateMetadataAsync(Metadata metadata)
+    {
+        var content = GenerateMetadataBody(metadata, Encoding.UTF8, "application/json");
+        var response = await httpClient.PutAsync($"metadata/{metadata.Id}", content);
+        if ((int)response.StatusCode == 404)
+            throw new Exception(
+                $"No metadata with Id {metadata.Id} found, update could not be processed");
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error while updating the metadata. Status code : {(int)response.StatusCode} - {response.StatusCode}");
+
+        return JObject.Parse(await response.Content.ReadAsStringAsync()).ToObject<Metadata>() ??
+               throw new Exception($"Updated Metadata '{metadata.Name}' linked to product id '{metadata.Product}' could not be retrieved");
+    }
+
+    private static HttpContent GenerateMetadataBody(Metadata metadata, Encoding encoding, string mediaType)
+    {
+        var body = new
+        {
+            name = metadata.Name,
+            product = metadata.Product.ToString(),
+            value= metadata.Value
+        };
+
+        return new StringContent(JsonConvert.SerializeObject(body), encoding, mediaType);
+    }
+
     private StringContent GenerateProductBody(Product product, Encoding encoding, string mediaType)
     {
         var body = new
