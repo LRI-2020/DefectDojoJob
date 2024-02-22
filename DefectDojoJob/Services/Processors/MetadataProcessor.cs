@@ -1,6 +1,8 @@
 ﻿using DefectDojoJob.Models.Adapters;
 using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
+using DefectDojoJob.Models.Processor.Errors;
+using DefectDojoJob.Services.Extractors;
 using DefectDojoJob.Services.Interfaces;
 
 namespace DefectDojoJob.Services.Processors;
@@ -8,18 +10,26 @@ namespace DefectDojoJob.Services.Processors;
 public class MetadataProcessor:IMetadataProcessor
 {
     private readonly IDefectDojoConnector defectDojoConnector;
+    private readonly IMetadataExtractor metadataExtractor;
 
-    public MetadataProcessor(IDefectDojoConnector defectDojoConnector)
+    public MetadataProcessor(IDefectDojoConnector defectDojoConnector, IMetadataExtractor metadataExtractor)
     {
         this.defectDojoConnector = defectDojoConnector;
+        this.metadataExtractor = metadataExtractor;
     }
-    public async Task<MetadataProcessingResult> ProcessProjectMetadata(AssetProject project)
+    public async Task<MetadataProcessingResult> ProcessProjectMetadataAsync(AssetProject project, ProductAdapterAction action,int productId)
     {
-        throw new NotImplementedException();
+        
+        var metadatas = metadataExtractor.ExtractMetadata(project, productId);
+        foreach (var metadata in metadatas)
+        {
+            
+        }
+
 
     }
 
-    private async Task<AssetToDefectDojoMapper> CreateMetadata(Metadata metadata)
+    private async Task<AssetToDefectDojoMapper> CreateMetadata(Metadata metadata, bool required)
     {        
         //!!!! if Metadata Code --> compensation is error here
         throw new NotImplementedException();

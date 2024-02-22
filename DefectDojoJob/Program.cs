@@ -28,6 +28,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddTransient<IProjectsAdapter,ProjectsAdapter>();
         services.AddTransient<IProductExtractor,ProductExtractor>();
         services.AddTransient<IProductsProcessor,ProductsProcessor>();
+        services.AddTransient<IMetadataExtractor,MetadataExtractor>();
+        services.AddTransient<IMetadataProcessor,MetadataProcessor>();
         services.AddTransient<AssetProjectsProcessor>();
         services.AddSingleton<IAssetProjectValidator,AssetProjectValidator>();
         services.AddLogging(o => { o.AddConsole(); });

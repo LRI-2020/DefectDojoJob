@@ -3,6 +3,7 @@ using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Services.Interfaces;
+using DefectDojoJob.Services.Processors;
 
 namespace DefectDojoJob.Services.Adapters;
 
@@ -10,11 +11,13 @@ public class ProjectsAdapter : IProjectsAdapter
 {
     private readonly IProductsProcessor productsProcessor;
     private readonly IDefectDojoConnector defectDojoConnector;
+    private readonly IMetadataProcessor metadataProcessor;
     private const string CodeMetadataName = "AssetCode";
-    public ProjectsAdapter( IProductsProcessor productsProcessor, IDefectDojoConnector defectDojoConnector)
+    public ProjectsAdapter( IProductsProcessor productsProcessor, IDefectDojoConnector defectDojoConnector, IMetadataProcessor metadataProcessor)
     {
         this.productsProcessor = productsProcessor;
         this.defectDojoConnector = defectDojoConnector;
+        this.metadataProcessor = metadataProcessor;
     }
 
     public async Task<List<ProductAdapterResult>> StartAdapterAsync(List<AssetProject> projects, List<AssetToDefectDojoMapper> users)
@@ -46,8 +49,9 @@ public class ProjectsAdapter : IProjectsAdapter
         var productId = await ExistingProjectAsync(project);
         var actionNeeded = productId != null ? ProductAdapterAction.Update : ProductAdapterAction.Create;
         result.ProductResult = await productsProcessor.ProcessProductAsync(project, users, actionNeeded, productId);
-       
-        //Metadata
+        var product = result.ProductResult.Entity;
+        if(product != null)
+            result.MetadataResults = await metadataProcessor.ProcessProjectMetadataAsync(project, actionNeeded, product.DefectDojoId);
         //Engagements
         //Endpoints
         //ProductGroup

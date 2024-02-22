@@ -5,5 +5,5 @@ namespace DefectDojoJob.Services.Interfaces;
 
 public interface IMetadataProcessor
 {
-    public Task<MetadataProcessingResult> ProcessProjectMetadata(AssetProject project);
+    Task<MetadataProcessingResult> ProcessProjectMetadataAsync(AssetProject project, ProductAdapterAction action, int productId);
 }
