@@ -1,6 +1,4 @@
-using System.Net.Http.Headers;
 using DefectDojoJob;
-using DefectDojoJob.Services;
 using DefectDojoJob.Services.Adapters;
 using DefectDojoJob.Services.DefectDojoConnectors;
 using DefectDojoJob.Services.Extractors;

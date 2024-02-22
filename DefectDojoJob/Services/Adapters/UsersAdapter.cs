@@ -30,6 +30,4 @@ public class UsersAdapter: IUsersAdapter
  
         return new UsersAdaptersResults(usersResult,groupsResult);
     }
-
-    
 }
