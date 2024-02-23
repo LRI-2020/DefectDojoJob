@@ -27,14 +27,13 @@ public class MetadataProcessor : IMetadataProcessor
         {
             try
             {
-                res.Entities.Add(await ProcessMetadataAsync(metadataInfo.metadata, action, productId));
+                res.Entities.Add(await ProcessMetadataAsync(metadataInfo.metadata, action));
             }
             catch (Exception e)
             {
                 //If metadata required not created - product deleted and process should stop
                 if (action == ProductAdapterAction.Create && metadataInfo.required)
                     throw await StartCompensationAsync(productId, project.Code);
-
                 if (e is WarningAssetProjectProcessor warning)
                     res.Warnings.Add(warning);
                 else
@@ -47,19 +46,40 @@ public class MetadataProcessor : IMetadataProcessor
         return res;
     }
 
-    private async Task<AssetToDefectDojoMapper> ProcessMetadataAsync(Metadata metadata, ProductAdapterAction action, int?productId)
+    private async Task<AssetToDefectDojoMapper> ProcessMetadataAsync(Metadata metadata, ProductAdapterAction action)
     {
         switch (action)
         {
             case ProductAdapterAction.Create:
                 return await CreateMetadataAsync(metadata);
             case ProductAdapterAction.Update:
-                metadata.Product=productId?? throw new Exception("Update metadata requested but no productId found or provided");
-                return await UpdateMetadataAsync(metadata);
-            case ProductAdapterAction.None:
+                return await ProcessMetadataForUpdate(metadata);
+                case ProductAdapterAction.None:
             default:
                 throw new Exception($"Invalid action requested {nameof(action)}");
         }
+    }
+
+    private async Task<AssetToDefectDojoMapper> ProcessMetadataForUpdate(Metadata metadata)
+    {
+        var originalMetadata = await GetOriginalMetadataAsync(metadata);
+
+        //Do not touch asset Code for existing project
+        if (string.Equals(metadata.Name, "assetCode", StringComparison.CurrentCultureIgnoreCase))
+            return ExistingAssetCode(originalMetadata, metadata);
+        
+        //create metadata if new
+        if (originalMetadata == null) return await CreateMetadataAsync(metadata);
+        
+        //Update metadata if existing
+        metadata.Id = originalMetadata.Id;
+        return await UpdateMetadataAsync(metadata);
+    }
+
+    private AssetToDefectDojoMapper ExistingAssetCode(Metadata? originalMetadata, Metadata metadata)
+    {
+        return new AssetToMetadataMapper(metadata.Name, originalMetadata?.Id?? throw new Exception(
+            "Project already exist in defect dojo but assetCode could not be found"));
     }
 
     private async Task<ErrorAssetProjectProcessor> StartCompensationAsync(int productId, string code)
@@ -79,18 +99,12 @@ public class MetadataProcessor : IMetadataProcessor
     private async Task<AssetToDefectDojoMapper> CreateMetadataAsync(Metadata metadata)
     {
         var metadataRes = await defectDojoConnector.CreateMetadataAsync(metadata);
-        return new AssetToMetadataMapper(metadataRes.Name, metadata.Id);
+        return new AssetToMetadataMapper(metadataRes.Name, metadataRes.Id);
     }
 
     private async Task<AssetToDefectDojoMapper> UpdateMetadataAsync(Metadata metadata)
     {
-        var originalMetadata = await GetOriginalMetadataAsync(metadata);
-        if (originalMetadata == null)
-            throw new Exception($"No metadata '{metadata.Name}' linked to product with Id {metadata.Product} found, update could not be processed");
-        
-        metadata.Id = originalMetadata.Id;
         var updateRes = await defectDojoConnector.UpdateMetadataAsync(metadata);
-
         return new AssetToMetadataMapper(metadata.Name, updateRes.Id);
     }
 

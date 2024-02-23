@@ -27,7 +27,9 @@ public class MockDefectDojoConnector:Mock<IDefectDojoConnector>
         Setup(m 
             => m.CreateProductAsync(It.IsAny<Product>())).ReturnsAsync(output);
         return this;
-    }     
+    }    
+    
+    
     
     public MockDefectDojoConnector MockUpdateProductAsync(Product output)
     {
@@ -41,8 +43,15 @@ public class MockDefectDojoConnector:Mock<IDefectDojoConnector>
         Setup(m 
             => m.CreateMetadataAsync(It.IsAny<Metadata>())).ReturnsAsync(output);
         return this;
+    }    
+    
+    public MockDefectDojoConnector MockUpdateMetadataAsync(Metadata output)
+    {
+        Setup(m 
+            => m.UpdateMetadataAsync(It.IsAny<Metadata>())).ReturnsAsync(output);
+        return this;
     }
-    public MockDefectDojoConnector MockGetMetadataAsync(Metadata output)
+    public MockDefectDojoConnector MockGetMetadataAsync(Metadata? output)
     {
         Setup(m 
             => m.GetMetadataAsync(It.IsAny<Dictionary<string,string>>())).ReturnsAsync(output);
