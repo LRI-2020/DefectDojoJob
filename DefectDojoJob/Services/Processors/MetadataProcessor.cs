@@ -101,23 +101,23 @@ public class MetadataProcessor : IMetadataProcessor
     private async Task<ErrorAssetProjectProcessor> MetadataCompensationAsync(List<AssetToDefectDojoMapper> metadataList, string code, string metadataInError)
     {
         var message = $"Required metadata '{metadataInError}' could not be created.";
-        var deletedIds = new List<int>();
-        var notDeletedIds = new List<int>();
+        var deletedIds = new List<string>();
+        var notDeletedIds = new List<string>();
         foreach (var metadata in metadataList)
         {
             try
             {
-                if (await defectDojoConnector.DeleteMetadataAsync(metadata.DefectDojoId)) deletedIds.Add(metadata.DefectDojoId);
-                else notDeletedIds.Add(metadata.DefectDojoId);
+                if (await defectDojoConnector.DeleteMetadataAsync(metadata.DefectDojoId)) deletedIds.Add(metadata.DefectDojoId.ToString());
+                else notDeletedIds.Add(metadata.DefectDojoId.ToString());
             }
             catch (Exception)
             {
-                notDeletedIds.Add(metadata.DefectDojoId);
+                notDeletedIds.Add(metadata.DefectDojoId.ToString());
             }
         }
 
-        var success = deletedIds.Any() ? $" Compensation successful for previously created metadata {deletedIds}" : "";
-        var failed = notDeletedIds.Any() ? $" Compensation failed for previously created metadata {notDeletedIds}. Please clean up defect dojo manually" : "";
+        var success = deletedIds.Any() ? $" Compensation successful for previously created metadata "+string.Join(',',deletedIds) : "";
+        var failed = notDeletedIds.Any() ? $" Compensation failed for previously created metadata "+string.Join(",",notDeletedIds)+". Please clean up defect dojo manually" : "";
 
         return new ErrorAssetProjectProcessor(message + success + failed, code, EntitiesType.Metadata);
     }

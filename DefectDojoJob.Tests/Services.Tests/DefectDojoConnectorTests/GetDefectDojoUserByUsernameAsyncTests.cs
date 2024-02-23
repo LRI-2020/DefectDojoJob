@@ -2,7 +2,7 @@
 using DefectDojoJob.Tests.Helpers.Tests;
 using Newtonsoft.Json;
 
-namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnector.Tests;
+namespace DefectDojoJob.Tests.Services.Tests.DefectDojoConnectorTests;
 
 public class GetDefectDojoUserByUsernameAsyncTests
 {

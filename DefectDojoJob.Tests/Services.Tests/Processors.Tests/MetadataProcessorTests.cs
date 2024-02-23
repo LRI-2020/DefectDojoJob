@@ -162,11 +162,11 @@ public class MetadataProcessorTests
             .Returns(extraction);
         defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(metadata)).ThrowsAsync(error);
         defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(metadata2)).ReturnsAsync(metadata2);
+        defectDojoConnectorMock.Setup(m => m.DeleteMetadataAsync(It.IsAny<int>())).ReturnsAsync(true);
         var sut = new MetadataProcessor(defectDojoConnectorMock.Object, metadataExtractorMock.Object);
 
-        Func<Task> act = () => sut.ProcessProjectMetadataAsync(pi, ProductAdapterAction.Create, productId);
-        
-        await act.Should().ThrowAsync<Exception>();
+       await sut.ProcessProjectMetadataAsync(pi, ProductAdapterAction.Create, productId);
+
         defectDojoConnectorMock.Verify(m => m.CreateMetadataAsync(It.IsAny<Metadata>()), Times.Exactly(2));
         defectDojoConnectorMock.Verify(m => m.DeleteProductAsync(productId), Times.Once());
         defectDojoConnectorMock.Verify(m => m.DeleteMetadataAsync(metadata2.Id), Times.Once());
@@ -190,7 +190,7 @@ public class MetadataProcessorTests
 
     [Theory]
     [AutoMoqData]
-    public async Task WhenCompensationSuccess_SpecificErrorThrown(MockDefectDojoConnector defectDojoConnectorMock,
+    public async Task WhenProductCompensationSuccess_SpecificErrorAdded(MockDefectDojoConnector defectDojoConnectorMock,
         Mock<IMetadataExtractor> metadataExtractorMock, AssetProject pi, Metadata metadata, int productId, Exception error)
     {
         List<(Metadata, bool)> extraction = new() { (metadata, true) };
@@ -203,6 +203,44 @@ public class MetadataProcessorTests
         Func<Task> act = () => sut.ProcessProjectMetadataAsync(pi, ProductAdapterAction.Create, productId);
         await act.Should().ThrowAsync<Exception>().Where(e => e.Message.Contains(
             $"Metadata '{metadata.Name}' could not be created; Compensation successful- Product with Id '{productId}' with code {pi.Code} has been deleted"));
+    }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenMetadataCompensationSuccess_SpecificErrorAdded(MockDefectDojoConnector defectDojoConnectorMock,
+        Mock<IMetadataExtractor> metadataExtractorMock, AssetProject pi, Metadata metadata,Metadata metadata2, int productId, Exception error)
+    {
+        List<(Metadata, bool)> extraction = new() { (metadata2,false),(metadata, true) };
+        metadataExtractorMock.Setup(m => m.ExtractMetadata(It.IsAny<AssetProject>(), It.IsAny<int>()))
+            .Returns(extraction);
+        defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(metadata)).ThrowsAsync(error);
+        defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(metadata2)).ReturnsAsync(metadata2);
+        defectDojoConnectorMock.Setup(m => m.DeleteMetadataAsync(It.IsAny<int>())).ReturnsAsync(true);
+        var sut = new MetadataProcessor(defectDojoConnectorMock.Object, metadataExtractorMock.Object);
+
+        var res = await sut.ProcessProjectMetadataAsync(pi, ProductAdapterAction.Create, productId);
+
+        res.Errors.Should().Contain(e => e.Message.Contains(
+            "Compensation successful for previously created metadata") && e.Message.Contains(metadata2.Id.ToString()));
+        }
+    
+    [Theory]
+    [AutoMoqData]
+    public async Task WhenMetadataCompensationFailed_SpecificErrorAdded(MockDefectDojoConnector defectDojoConnectorMock,
+        Mock<IMetadataExtractor> metadataExtractorMock, AssetProject pi, Metadata metadata,Metadata metadata2, int productId, Exception error)
+    {
+        List<(Metadata, bool)> extraction = new() { (metadata2,false),(metadata, true) };
+        metadataExtractorMock.Setup(m => m.ExtractMetadata(It.IsAny<AssetProject>(), It.IsAny<int>()))
+            .Returns(extraction);
+        defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(metadata)).ThrowsAsync(error);
+        defectDojoConnectorMock.Setup(m => m.CreateMetadataAsync(metadata2)).ReturnsAsync(metadata2);
+        defectDojoConnectorMock.Setup(m => m.DeleteMetadataAsync(It.IsAny<int>())).ReturnsAsync(false);
+        var sut = new MetadataProcessor(defectDojoConnectorMock.Object, metadataExtractorMock.Object);
+
+        var res = await sut.ProcessProjectMetadataAsync(pi, ProductAdapterAction.Create, productId);
+
+        res.Errors.Should().Contain(e => e.Message.Contains(
+            "Compensation failed for previously created metadata") && e.Message.Contains(metadata2.Id.ToString()));
     }
 
     
