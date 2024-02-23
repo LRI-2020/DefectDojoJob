@@ -11,10 +11,9 @@ public interface IDefectDojoConnector
 
     public Task<Metadata?> GetMetadataAsync(Dictionary<string, string> searchParams);
     public Task<Product?> GetProductByNameAsync(string name);
-
-
     Task<Product> UpdateProductAsync(Product product);
     Task<Metadata> CreateMetadataAsync(Metadata metadata);
-    Task<bool> DeleteProductAsync(int createResId);
+    Task<bool> DeleteProductAsync(int productId);
     Task<Metadata> UpdateMetadataAsync(Metadata metadata);
+    Task<bool> DeleteMetadataAsync(int metadataId);
 }

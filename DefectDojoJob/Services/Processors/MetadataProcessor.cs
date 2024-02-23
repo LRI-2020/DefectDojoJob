@@ -8,6 +8,7 @@ namespace DefectDojoJob.Services.Processors;
 
 public class MetadataProcessor : IMetadataProcessor
 {
+    //TODO extract the compensation into a dedicated service
     private readonly IDefectDojoConnector defectDojoConnector;
     private readonly IMetadataExtractor metadataExtractor;
 
@@ -31,9 +32,14 @@ public class MetadataProcessor : IMetadataProcessor
             }
             catch (Exception e)
             {
-                //If metadata required not created - product deleted and process should stop
+                //If metadata required not created during project creation
+                //compensation, store as errors and stop processing
                 if (action == ProductAdapterAction.Create && metadataInfo.required)
-                    throw await StartCompensationAsync(productId, project.Code);
+                {
+                    res.Errors = await StartCompensationAsync(productId, res.Entities, project.Code, metadataInfo.metadata.Name);
+                    return res;
+                }
+
                 if (e is WarningAssetProjectProcessor warning)
                     res.Warnings.Add(warning);
                 else
@@ -54,7 +60,7 @@ public class MetadataProcessor : IMetadataProcessor
                 return await CreateMetadataAsync(metadata);
             case ProductAdapterAction.Update:
                 return await ProcessMetadataForUpdate(metadata);
-                case ProductAdapterAction.None:
+            case ProductAdapterAction.None:
             default:
                 throw new Exception($"Invalid action requested {nameof(action)}");
         }
@@ -67,32 +73,66 @@ public class MetadataProcessor : IMetadataProcessor
         //Do not touch asset Code for existing project
         if (string.Equals(metadata.Name, "assetCode", StringComparison.CurrentCultureIgnoreCase))
             return ExistingAssetCode(originalMetadata, metadata);
-        
+
         //create metadata if new
         if (originalMetadata == null) return await CreateMetadataAsync(metadata);
-        
+
         //Update metadata if existing
         metadata.Id = originalMetadata.Id;
         return await UpdateMetadataAsync(metadata);
     }
 
-    private AssetToDefectDojoMapper ExistingAssetCode(Metadata? originalMetadata, Metadata metadata)
+    private static AssetToDefectDojoMapper ExistingAssetCode(Metadata? originalMetadata, Metadata metadata)
     {
-        return new AssetToMetadataMapper(metadata.Name, originalMetadata?.Id?? throw new Exception(
-            "Project already exist in defect dojo but assetCode could not be found"));
+        return new AssetToMetadataMapper(metadata.Name, originalMetadata?.Id ?? throw new Exception(
+            $"Project already exist in defect dojo but assetCode '{metadata.Value}' could not be found"));
     }
 
-    private async Task<ErrorAssetProjectProcessor> StartCompensationAsync(int productId, string code)
+    private async Task<List<ErrorAssetProjectProcessor>> StartCompensationAsync(int productId, List<AssetToDefectDojoMapper> metadata, string code, string metadataInError)
+    {
+        var res = new List<ErrorAssetProjectProcessor>
+        {
+            await ProductCompensationAsync(productId, code, metadataInError),
+            await MetadataCompensationAsync(metadata, code, metadataInError)
+        };
+        return res;
+    }
+
+    private async Task<ErrorAssetProjectProcessor> MetadataCompensationAsync(List<AssetToDefectDojoMapper> metadataList, string code, string metadataInError)
+    {
+        var message = $"Required metadata '{metadataInError}' could not be created.";
+        var deletedIds = new List<int>();
+        var notDeletedIds = new List<int>();
+        foreach (var metadata in metadataList)
+        {
+            try
+            {
+                if (await defectDojoConnector.DeleteMetadataAsync(metadata.DefectDojoId)) deletedIds.Add(metadata.DefectDojoId);
+                else notDeletedIds.Add(metadata.DefectDojoId);
+            }
+            catch (Exception)
+            {
+                notDeletedIds.Add(metadata.DefectDojoId);
+            }
+        }
+
+        var success = deletedIds.Any() ? $" Compensation successful for previously created metadata {deletedIds}" : "";
+        var failed = notDeletedIds.Any() ? $" Compensation failed for previously created metadata {notDeletedIds}. Please clean up defect dojo manually" : "";
+
+        return new ErrorAssetProjectProcessor(message + success + failed, code, EntitiesType.Metadata);
+    }
+
+    private async Task<ErrorAssetProjectProcessor> ProductCompensationAsync(int productId, string code, string metadataInError)
     {
         if (await defectDojoConnector.DeleteProductAsync(productId))
         {
             return new ErrorAssetProjectProcessor(
-                $"Metadata with AssetCode could not be created; Compensation successful- Product with Id '{productId}' with code {code} has been deleted",
+                $"Metadata '{metadataInError}' could not be created; Compensation successful- Product with Id '{productId}' with code {code} has been deleted",
                 code, EntitiesType.Metadata);
         }
 
         return new ErrorAssetProjectProcessor(
-            $"Metadata with AssetCode could not be created; Compensation has failed - Product with Id '{productId}' with code {code} could not be deleted.PLease clean DefectDojo manually",
+            $"Metadata '{metadataInError}' could not be created; Compensation has failed - Product with Id '{productId}' with code {code} could not be deleted.Please clean DefectDojo manually",
             code, EntitiesType.Product);
     }
 
@@ -108,7 +148,7 @@ public class MetadataProcessor : IMetadataProcessor
         return new AssetToMetadataMapper(metadata.Name, updateRes.Id);
     }
 
-    private  async Task<Metadata?> GetOriginalMetadataAsync(Metadata metadata)
+    private async Task<Metadata?> GetOriginalMetadataAsync(Metadata metadata)
     {
         var searchParams = new Dictionary<string, string>
         {
@@ -116,6 +156,5 @@ public class MetadataProcessor : IMetadataProcessor
             { "product", metadata.Product.ToString() }
         };
         return await defectDojoConnector.GetMetadataAsync(searchParams);
-
     }
 }

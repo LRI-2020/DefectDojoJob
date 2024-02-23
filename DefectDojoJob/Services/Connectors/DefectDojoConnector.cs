@@ -131,6 +131,11 @@ public class DefectDojoConnector : IDefectDojoConnector
             $"Updated Metadata '{metadata.Name}' linked to product id '{metadata.Product}' could not be retrieved");
     }
 
+    public Task<bool> DeleteMetadataAsync(int metadataId)
+    {
+        throw new NotImplementedException();
+    }
+
     private static HttpContent GenerateMetadataRequestContent(Metadata metadata, Encoding encoding, string mediaType)
     {
         var body = new
