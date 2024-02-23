@@ -1,5 +1,4 @@
-﻿using DefectDojoJob.Models.Adapters;
-using DefectDojoJob.Models.DefectDojo;
+﻿using DefectDojoJob.Models.DefectDojo;
 using DefectDojoJob.Models.Processor;
 using DefectDojoJob.Models.Processor.Errors;
 using DefectDojoJob.Services.Interfaces;
